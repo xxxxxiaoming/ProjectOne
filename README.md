@@ -15,7 +15,7 @@
 
 ## 环境要求
 
-- **Unreal Engine 5.3**（通过 Epic Games Launcher 安装）
+- **Unreal Engine 5.3.2**（通过 Epic Games Launcher 安装）
 - **Visual Studio 2022**，组件清单见仓库根目录的 `.vsconfig`，首次打开解决方案时 VS 会提示按该文件安装
 - **Git LFS 3.x 及以上**（`git lfs version` 检查）
 
