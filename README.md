@@ -6,7 +6,7 @@
 
 | 组件 | 说明 |
 |---|---|
-| Unreal Engine | 5.3 |
+| Unreal Engine | 5.3.2 |
 | 工程模块 | `ProjectOne`（Runtime C++ 模块） |
 | UnLua | 2.3.6，Lua 脚本位于 `Content/Script/` |
 | UnLuaExtensions | LuaProtobuf / LuaRapidjson / LuaSocket |
