@@ -1,0 +1,45 @@
+# ============================================================
+# Unreal Engine 5 项目 .gitignore
+# 原则：只忽略“可再生成”的内容，插件源码与第三方预编译库必须提交
+# ============================================================
+
+# ---- 引擎/项目构建产物 ----
+/Binaries/
+/DerivedDataCache/
+/Intermediate/
+/Saved/
+/Build/
+/Platforms/
+
+# ---- 插件构建产物（插件源码、Config、Content、Source/ThirdParty 预编译库需要提交） ----
+/Plugins/**/Binaries/
+/Plugins/**/Intermediate/
+/Plugins/**/obj/
+# Rider 自动安装的插件，属于本机工具链，不共享
+/Plugins/Developer/RiderLink/
+
+# ---- IDE / 编辑器生成文件 ----
+/.vs/
+/.idea/
+/.vscode/
+*.sln
+*.suo
+*.sdf
+*.opensdf
+*.VC.db
+*.VC.opendb
+
+# ---- 个人目录（每个开发者自己的沙盒/收藏夹，本地文件请用 .git/info/exclude） ----
+/Content/Developers/*
+/Content/Collections/
+
+# ---- 系统 / 临时 / 日志文件 ----
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+*.log
+*.tmp
+*.bak
+*.autosave
+*.dmp
