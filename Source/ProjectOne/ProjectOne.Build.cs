@@ -8,9 +8,17 @@ public class ProjectOne : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
+		PublicDependencyModuleNames.AddRange(new string[]
+		{
+			"Core",
+			"CoreUObject",
+			"Engine",
+			"InputCore",
+			// CashierDirector implements IUnLuaInterface in a public header.
+			"UnLua"
+		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "UnLua", "Lua" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "Lua" });
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
