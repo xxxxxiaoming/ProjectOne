@@ -2,7 +2,9 @@
 
 风格：**A 厚描边手账贴纸**。商品不拟人；钱币为手绘马克厚描边。主色天蓝色 / 软白底。
 
-本目录提交老板已锁定的 ART-A01～A09 源图（jpg）和布局文档。Texture2D 与 Widget Blueprint 的 `.uasset` 必须在 **UE 5.3 Editor** 里导入或创建。云端没有编辑器，这里不放任何 `.uasset` / `.umap`。
+本目录提交老板已锁定的 ART-A01～A09 源图和布局文档。jpg 整板保留；透明 PNG 切图放在同一 `Textures/` 子目录。Texture2D 与 Widget Blueprint 的 `.uasset` 必须在 **UE 5.3 Editor** 里导入或创建。云端没有编辑器，这里不放任何 `.uasset` / `.umap`。
+
+**优先导入切图 PNG**（商品 icon、钱币、chip、扫码、顾客）。jpg 整板继续当版式参考：A06 / A07 / A08 只有 jpg；各套整板 jpg 与 `*_sheet_rgba.png` 用于对照。A05 chip 的焦点、按下还没齐，先用该面额的 default，等小钰补。清单见 `Docs/CUTOUTS.md`。
 
 ## 目录
 
@@ -18,7 +20,7 @@
 | `Textures/TopBar/` | ART-A07 顶栏 |
 | `Textures/ShiftEnd/` | ART-A08 班末结算 |
 | `Textures/Customer/` | ART-A09 顾客剪影 |
-| `Docs/` | `ASSET_MAP.md`、`UMG_LAYOUT.md`、交互稿终稿 |
+| `Docs/` | `ASSET_MAP.md`、`UMG_LAYOUT.md`、`CUTOUTS.md`、交互稿终稿 |
 
 源文件名保持锁定稿原名。映射见 `Docs/ASSET_MAP.md`。
 
@@ -42,6 +44,7 @@
 ## 本批没有的东西
 
 - **ART-A10** 通用焦点框尚未纳入。
-- 当前多为整板 jpg。导入 Texture2D 前需要抠透明底，PNG 另补。
+- A02 商品卡、A06 结算板、A07 顶栏、A08 班末没有切图，沿用 jpg 整板。
+- A05 chip 缺焦点 / 按下。导入时用该面额的 default 顶上，等小钰补。
 
 玩法 UI 放在 `Content/UI/Cashier/`，不要放进 `Plugins/UnLuaTestSuite`。

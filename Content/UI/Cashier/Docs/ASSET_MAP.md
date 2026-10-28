@@ -7,7 +7,7 @@
 - Widget Blueprint 建在 `Content/UI/Cashier/`（与 `Textures/`、`Docs/` 同级）
 - 贴图源文件在 `Content/UI/Cashier/Textures/`；商品 icon 用 `Textures/Icons/`
 
-下表路径相对于 `Content/UI/Cashier/`。源文件名保持锁定稿原名。
+下表是锁定 jpg 整板，路径相对于 `Content/UI/Cashier/`。源文件名保持锁定稿原名。透明切图与 jpg 同目录，见下一节。
 
 | ART | 锁定源文件 | Content 子路径 | 用途 |
 |-----|------------|----------------|------|
@@ -20,6 +20,20 @@
 | A07 | `v2f_ART-A07_topbar.jpg` | `Textures/TopBar/` | 顶栏时钟/分数（无实付） |
 | A08 | `v2f_ART-A08_shift_settle.jpg` | `Textures/ShiftEnd/` | 班末结算版式 |
 | A09 | `v2f_ART-A09_customer_enter_exit.jpg` | `Textures/Customer/` | 剪影入队·到台·离场 |
+
+## 切图 PNG（优先导入）
+
+单件 `A0x_*.png` 是 icon / 钱币 / chip / 扫码 / 顾客的优先导入资产，与上表 jpg 放在同一子目录。文件名与缺口见 `Docs/CUTOUTS.md`。
+
+| ART | 切图 | 说明 |
+|-----|------|------|
+| A01 | `Textures/Icons/A01_*.png` | 商品 icon，优先于整板 jpg |
+| A03 | `Textures/FX/A03_*.png` | 扫码帧 |
+| A04 | `Textures/Currency/A04_*.png` | 钱币五态齐 |
+| A05 | `Textures/Chips/A05_*.png` | chip 的焦点、按下未齐；先用该面额 default，等小钰补 |
+| A09 | `Textures/Customer/A09_*.png` | 顾客入队 / 离场帧 |
+
+A06 / A07 / A08 仍只有 jpg 整板，作版式参考。整板 jpg 与 `*_sheet_rgba.png` 用于对照，不代替单件切图。
 
 ## Widget Blueprint 类名（Linsey 指定）
 
@@ -45,10 +59,11 @@
 ## 未进本包
 
 - **ART-A10** 通用焦点框：老板尚未在本批 OK，暂不进仓。
-- 透明底切图：当前多为整板 jpg；进 Texture 前需抠底（喊小钰补 PNG）。
+- A02 商品卡没有切图，仍用 jpg 整板。
+- A05 chip 的焦点、按下未进仓；¥10 chip 也没有禁用。先用该面额 default。
 
 ## 二进制 .uasset
 
-云端 VM **无 UE5.3 Editor**，本 PR **不伪造** Widget/Texture `.uasset`。本包提交：源图 + 交互终稿 + 布局契约。Texture2D / UMG Widget Blueprint 由本机 Editor 导入或 Linsey 在编辑器内建壳后挂贴图。
+云端 VM **无 UE5.3 Editor**，本 PR **不伪造** Widget/Texture `.uasset`。本包提交：锁定 jpg、透明 PNG 切图、交互终稿与布局契约。Texture2D / UMG Widget Blueprint 由本机 Editor 导入或 Linsey 在编辑器内建壳后挂贴图。
 
 玩法资产放在 `Content/UI/Cashier/`，不要放进 `Plugins/UnLuaTestSuite`。
