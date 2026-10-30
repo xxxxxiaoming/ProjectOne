@@ -2,7 +2,7 @@
 
 基于 **Unreal Engine 5.3** 的 C++ 工程，使用 [UnLua](https://github.com/Tencent/UnLua) 在 Lua 侧编写游戏逻辑，美术资产通过 **Git LFS** 管理。
 
-AutoBlueprint 文档：[架构设计](Plugins/AutoBlueprint/Docs/Architecture.md)、[编码规范 Constitution](Plugins/AutoBlueprint/Docs/constitution.md)、[Lua/UnLua 开发路线图](Plugins/AutoBlueprint/Docs/plan.md)。
+AutoBlueprint 文档：[架构设计](Plugins/AutoBlueprint/Docs/Architecture.md)、[编码规范 Constitution](Plugins/AutoBlueprint/Docs/constitution.md)、[Lua/UnLua 开发路线图](Plugins/AutoBlueprint/Docs/plan.md)、[P0 编译与验证步骤](Plugins/AutoBlueprint/Docs/P0-Validation.md)。
 
 ## 技术栈
 
@@ -61,7 +61,7 @@ ProjectOne/
 │  ├─ Collections/    # 资产收藏夹（本地，不入库）
 │  └─ Developers/     # 个人沙盒目录（不入库）
 ├─ Plugins/
-│  ├─ AutoBlueprint/            # UI 蓝图生成插件，目前包含 Docs 规划文档
+│  ├─ AutoBlueprint/            # UI 蓝图生成 Editor 插件，P0 源码已准备、待 UE 验证
 │  ├─ UnLua/                    # Lua 运行时 + 预编译 Lua 库
 │  ├─ UnLuaExtensions/          # Protobuf / Rapidjson / Socket
 │  └─ UnLuaTestSuite/           # 测试套件（默认未启用）

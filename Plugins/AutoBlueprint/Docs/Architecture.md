@@ -14,7 +14,7 @@
 | 插件位置 | `ProjectOne/Plugins/AutoBlueprint/` |
 | 资产位置 | 项目 `/Game/UI/...`，对应 `ProjectOne/Content/UI/...` |
 | 重复生成 | 首版 CreateOnly；覆盖重建和保留人工修改的更新作为后续独立能力 |
-| 本轮交付 | 架构、编码规范与开发计划；当前未开始插件实现 |
+| 当前实现 | P0 固定输入生成源码已准备，UE 编译和运行待验证；详见 [P0 验证说明](P0-Validation.md) |
 
 这里的“直接可用”指蓝图能够成功编译、保存、重新打开、实例化并通过 `AddToViewport` 显示。原生按钮可呈现常规交互样式，点击之后的游戏业务行为由后续逻辑实现。
 
@@ -97,7 +97,7 @@ ProjectOne/
 └─ Saved/AutoBlueprint/Reports/
 ```
 
-三份文档集中在 `Plugins/AutoBlueprint/Docs/`；上图其余插件源码与生成资产为计划项，尚未创建。Lua 工具脚本放在插件 `Scripts/Lua/` 下，由 EditorLuaRunner 显式加载；不放进项目默认会随游戏分发的 `Content/Script/`。项目专用布局配置放在 `UIBlueprintLayouts/` 并纳入版本控制；报告放在 Saved 下。业务 Widget 名称继续遵循现有 `WBP_CashierMain` 等约定。
+架构、编码规范与计划集中在 `Plugins/AutoBlueprint/Docs/`，该目录现另有 P0 验证说明。上图为目标结构；P0 已建立最小插件、Lua 宿主、反射门面、固定树构建和编译保存代码，通用布局解析、资源、注册表及生成资产仍为后续项。Lua 工具脚本放在插件 `Scripts/Lua/` 下，由 EditorLuaRunner 显式加载；不放进项目默认会随游戏分发的 `Content/Script/`。项目专用布局配置放在 `UIBlueprintLayouts/` 并纳入版本控制；报告放在 Saved 下。业务 Widget 名称继续遵循现有 `WBP_CashierMain` 等约定。
 
 ## 5 模块职责与依赖
 
@@ -474,4 +474,4 @@ print("Generated: " .. result.AssetPath)
 
 现有收银 UI 的 `ASSET_MAP.md`、`UMG_LAYOUT.md` 与交互稿作为布局和命名依据。其中整板 JPG 应作为参考，不能用一张整板图片代替可编辑控件树；缺少独立切图的区域需要补图，或在确认后用原生控件组合表达。
 
-版本 0.2 草案以 Lua + UnLua + C++ 编辑器核心为实施基线。首版使用 CreateOnly，业务事件绑定、覆盖重建及增量更新留作后续能力。当前交付为文档修订，插件源码和 UE 运行验证尚未开始；实施首先完成 P0 的无需 Play 生成验证。
+版本 0.2 草案以 Lua + UnLua + C++ 编辑器核心为实施基线。首版使用 CreateOnly，业务事件绑定、覆盖重建及增量更新留作后续能力。P0 源码已准备，当前实现与验证步骤以 `P0-Validation.md` 为准。UE 编译与无需 Play 的生成、保存、新会话重开仍待本地验证；通过后再推进后续阶段。
