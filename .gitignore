@@ -53,3 +53,8 @@ Desktop.ini
 *.bak
 *.autosave
 *.dmp
+
+
+# ---- 第三方工具本地状态 ----
+
+.obsidian/
