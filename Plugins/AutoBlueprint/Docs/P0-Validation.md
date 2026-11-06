@@ -1,6 +1,6 @@
 # P0 代码与本地验证
 
-实现状态：P0 源码已准备，UE 5.3.2 的编译与运行验证待本地完成。云端没有 UE Editor，尚未生成或提交测试 `.uasset`，P0 未标记为验收通过。
+实现状态：P0 原有版本的 UE 5.3.2 本地验证已通过并提交，记录保留在第 6 节。本次调整了反射结果字段、编译保存接口和批量 TODO API，需要重新完整编译与回归；本次验证状态见第 7 节。当前云终端不可用，修改通过 GitHub 完成，未执行本次 UE 或独立 Lua 测试。
 
 ## 1 编译并运行
 
@@ -63,13 +63,16 @@ AutoBlueprint.P0.ErrorProbe
 Automation RunTests AutoBlueprint.P0
 ```
 
-也可在 Session Frontend 的 Automation 页面选择 `AutoBlueprint.P0`。当前有三项 UE 测试，均不写 `.uasset`：
+也可从 **Tools → Session Frontend → Automation** 选择 `AutoBlueprint.P0`。测试源码见 [AutoBlueprintP0Tests.cpp](../Source/AutoBlueprintEditor/Private/Tests/AutoBlueprintP0Tests.cpp)。当前有五项 UE 测试，均不写 `.uasset`；其中 `SingleBuildResult` 会创建并编译内存资产：
 
 - `InputValidation`：无效路径、空文本被拒绝，验证不分配目标包。
 - `LoadedPackageConflict`：同名未保存包被拒绝，原对象及 dirty 状态保持。
 - `LuaErrorAndCleanup`：连续异常保留堆栈、真实反射调用的构建失败传回宿主；任务前后的 Lua 环境数量、既有环境和游戏 Lua 启用状态保持。
 
-实际成功生成、保存和新会话重开仍按前述步骤检查。上述 UE 测试已编写，尚未在云端运行。
+- `SingleBuildResult`：实际创建并编译一个未保存蓝图，检查单 UI 路径、创建和保存状态；同名重试失败不得继承上次结果或修改已有包。
+- `BatchNotImplemented`：两个请求及空批量都明确报告未实现，保持每项结果位置；检查 C++ 调用与 UnLua 反射返回，并确认不分配目标包或写入磁盘。
+
+实际成功生成、保存和新会话重开仍按前述步骤检查。这五项测试的当前版本尚未执行；第 6 节保留的是改动前的三项测试通过记录。
 
 另外提供独立 Lua 脚本测试，从仓库根目录运行：
 
@@ -77,7 +80,7 @@ Automation RunTests AutoBlueprint.P0
 lua Plugins/AutoBlueprint/Scripts/Tests/p0_scripts_test.lua
 ```
 
-云端使用仓库附带的 Lua 5.4.3 源码临时构建了解释器，9 项脚本流程检查通过，涵盖成功、保存失败、布尔契约、编译/保存状态不一致、异常和无效脚本入口。该测试使用模拟的 UE 接口，只验证 Lua 流程，不证明 UnLua 反射、C++ 编译或资产生成可用。正常使用插件不需要额外安装独立 Lua。
+旧版本的 9 项脚本流程检查曾使用 Lua 5.4.3 在云端通过。本次已扩展到 15 项，新增目标路径不代表创建成功、只创建了包、创建布尔契约及缺失目标/包等结果边界检查；当前版本待执行。该测试使用模拟的 UE 接口，只验证 Lua 流程，不证明 UnLua 反射、C++ 编译或资产生成可用。正常使用插件不需要额外安装独立 Lua。
 
 ## 5 代码入口和当前边界
 
@@ -92,15 +95,15 @@ lua Plugins/AutoBlueprint/Scripts/Tests/p0_scripts_test.lua
 | [WidgetBlueprintWriter.cpp](../Source/AutoBlueprintEditor/Private/Assets/WidgetBlueprintWriter.cpp) | 检查编译诊断并按请求保存 |
 | [AutoBlueprintTypes.h](../Source/AutoBlueprintEditor/Public/AutoBlueprintTypes.h) | 请求、构建结果和诊断的反射契约 |
 
-`BuildSmokeTestWidget` 为 P0 固定样例接口。架构中的 `ValidateLayoutFile`、`BuildFromLayoutFile`、JSON Schema 和控件注册表仍属于 P2/P3，尚未实现。固定树代码单独放置，后续复用门面、子系统、诊断、编译保存流程，再接入通用构建器。
+`BuildSmokeTestWidget` 为 P0 固定样例接口，一次只生成一个 UI 及其目标包。`GenerateBatch` 是反射可调用的 TODO API，返回 `FAutoBlueprintBatchBuildResult`：正常编辑上下文下批量级和逐项诊断均为 `NOT_IMPLEMENTED`，包括空批量；不校验路径或创建/编译/保存资产。架构中的 `ValidateLayoutFile`、`BuildFromLayoutFile`、JSON Schema 和控件注册表仍属于 P2/P3，尚未实现。固定树代码单独放置，后续复用门面、子系统、诊断、编译保存流程，再接入通用构建器。
 
 P0 的两份脚本是独立模块，不使用 `require`。宿主只接受这两个固定文件，执行前清空该任务环境的模块搜索路径；通用受控模块加载留到 P1。UnLua 自身的环境初始化仍会执行其内置初始化和已注册回调，工具不调用游戏的 `Start`/`SetActive`，不执行项目默认启动模块。该入口用于可信的项目工具脚本，不提供不可信代码沙箱。
 
-`bSave=false` 表示“生成并编译，但不落盘”，会留下新建的未保存资产，不能当作只读预检。同名重试仍会被拒绝。编译/保存失败也可能留下本次创建的未保存包，`UnsavedPackages` 会报告这些包；插件不自动删除用户资产。Lua 脚本在保存后再报错时，先前的保存结果仍有效，`Saved package:` 日志保留，不承诺回滚。
+`bSave=false` 表示“生成并编译，但不落盘”，会留下新建的未保存资产，不能当作只读预检。同名重试仍会被拒绝。编译/保存失败也可能留下本次创建的未保存包；`CreatedPackageName` 非空且 `bSaved=false` 表示本次已创建但未保存的包，包创建成功但蓝图创建失败时也会报告；插件不自动删除用户资产。Lua 脚本在保存后再报错时，先前的保存结果仍有效，`Saved package:` 日志保留，不承诺回滚。
 
-## 6 本地验证记录
+## 6 本地验证记录（本次接口调整之前）
 
-填写本地执行结果后，才将 P0 标记为“验证通过”。
+以下保留用户已提交的原有验证记录，基线为 `88ac52cd8a1419be7df5bf2b81c029abc7f660bc`，不表示本次接口变更已通过回归。
 
 | 检查                              | 状态 / 记录         |
 | ------------------------------- | --------------- |
@@ -113,3 +116,45 @@ P0 的两份脚本是独立模块，不使用 `require`。宿主只接受这两�
 | 原有游戏 Lua 启动和行为                  | ✅               |
 | 独立 Lua 5.4.3 的 9 项脚本流程检查        | 云端通过；使用模拟 UE 接口 |
 | 描述文件、源码格式、文档链接检查                | 云端检查；不等价于 UE 编译 |
+
+## 7 本次结果契约迁移与回归（2026-11-06）
+
+本次为 P0 C++/Lua API 的破坏性调整，需关闭编辑器、完整重编译并重启；不要依赖 Live Coding 更新反射字段。修改调用代码或蓝图节点后重新编译调用方。布局 JSON 协议尚未实现，本次不改变 `schema_version`。
+
+| 原字段 | 当前读取方式 |
+| --- | --- |
+| 结果的 `AssetPath` | `TargetAssetPath`，表示已校验的目标路径；诊断中的 `AssetPath` 保持原名 |
+| `CreatedAssets` | `bAssetCreated` 判断目标蓝图是否创建成功，成功时路径为 `TargetAssetPath` |
+| `SavedPackages` | `bSaved=true` 时，`CreatedPackageName` 为本次保存成功的包 |
+| `UnsavedPackages` | `CreatedPackageName` 非空且 `bSaved=false`，代表本次创建但未保存的包 |
+| 复用一个结果累计多个 UI | 每个请求保留独立结果；批量结构的 `Results` 按输入顺序对应，包含失败或未执行的请求 |
+
+单次结果的 `bSuccess` 表示请求所要求的构建、编译及可选保存全部完成；`bSave=false` 时可以成功且未保存。结果是本次调用结束时的记录，不会追踪用户之后手工保存或修改的行为。未分配包与创建包后失败通过 `CreatedPackageName` 区分，不能仅看 `bSaved=false`。
+
+内部 `CompileAndSaveWidgetBlueprint` 现在返回独立的写入结果，由子系统合并到本次 UI 结果，不再接收并修改一个外部 `FAutoBlueprintBuildResult&`。
+
+批量 TODO API 的 Lua 形状如下（需在 AutoBlueprint 的编辑器 Lua 环境内运行，当前 P0 控制台入口仍仅加载两份固定脚本）：
+
+```lua
+local request = UE.FAutoBlueprintBatchRequest()
+local item = UE.FAutoBlueprintSmokeTestRequest()
+item.PackagePath = "/Game/UI/AutoBlueprintTests/WBP_BatchTodo"
+request.Requests:Add(item)
+
+local result = UE.UAutoBlueprintLibrary.GenerateBatch(request)
+-- 当前返回 NOT_IMPLEMENTED；不会生成 WBP_BatchTodo。
+for _, diagnostic in ipairs(result.Diagnostics:ToTable()) do
+    print(diagnostic.Code .. ": " .. diagnostic.Message)
+end
+-- Results 与 request.Requests 顺序对应，每项为独立的失败结果。
+```
+
+`FAutoBlueprintBatchBuildResult` 不提供汇总 `bSaved` 或重复的资产/包数组。批量执行、停止/继续策略及汇总查询仍为 TODO；不得把空的 `Results` 或“没有未保存包”解释为全部成功。
+
+| 本次检查 | 状态 |
+| --- | --- |
+| 新旧字段引用、反射声明、源文件换行及文档链接静态检查 | 已通过；不等价于 UHT/UE 编译 |
+| UE 5.3.2 完整编译 | 待本地执行 |
+| 五项 `AutoBlueprint.P0` 自动化测试 | 待本地执行 |
+| 独立 Lua 的 15 项脚本流程检查 | 待执行；当前云终端不可用 |
+| 新名字生成、保存及新编辑器会话重开 | 待本地回归 |

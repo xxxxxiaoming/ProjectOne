@@ -21,7 +21,7 @@ namespace
 	{
 		FAutoBlueprintDiagnostic& Diagnostic = Result.Diagnostics.AddDefaulted_GetRef();
 		Diagnostic.Code = Code;
-		Diagnostic.AssetPath = Result.AssetPath;
+		Diagnostic.AssetPath = Result.TargetAssetPath;
 		Diagnostic.Message = Message;
 	}
 
@@ -43,7 +43,7 @@ namespace
 			AddError(Result, TEXT("INVALID_PACKAGE_PATH"), Reason.ToString());
 			return false;
 		}
-		Result.AssetPath = ObjectPath;
+		Result.TargetAssetPath = ObjectPath;
 
 		FString Filename;
 		if (!FPackageName::TryConvertLongPackageNameToFilename(PackagePath, Filename, FPackageName::GetAssetPackageExtension()))
@@ -95,7 +95,7 @@ FAutoBlueprintBuildResult UAutoBlueprintSubsystem::BuildSmokeTestWidget(const FA
 		AddError(Result, TEXT("ASSET_CREATE_FAILED"), TEXT("Cannot create the new package."));
 		return Result;
 	}
-	Result.UnsavedPackages.Add(Request.PackagePath);
+	Result.CreatedPackageName = Package->GetName();
 
 	// Use UE's blueprint creation/compiler path and native UMG classes only.
 	TStrongObjectPtr<UWidgetBlueprint> Blueprint(Cast<UWidgetBlueprint>(FKismetEditorUtilities::CreateBlueprint(
@@ -108,7 +108,7 @@ FAutoBlueprintBuildResult UAutoBlueprintSubsystem::BuildSmokeTestWidget(const FA
 		return Result;
 	}
 	Blueprint->SetFlags(RF_Public | RF_Standalone | RF_Transactional);
-	Result.CreatedAssets.Add(Blueprint->GetPathName());
+	Result.bAssetCreated = true;
 	FAssetRegistryModule::AssetCreated(Blueprint.Get());
 	Blueprint->MarkPackageDirty();
 
@@ -117,6 +117,30 @@ FAutoBlueprintBuildResult UAutoBlueprintSubsystem::BuildSmokeTestWidget(const FA
 		AddError(Result, TEXT("WIDGET_TREE_BUILD_FAILED"), TEXT("Cannot construct the fixed P0 widget tree. The new asset remains unsaved."));
 		return Result;
 	}
-	AutoBlueprint::CompileAndSaveWidgetBlueprint(*Blueprint.Get(), Request.bSave, Result);
+	AutoBlueprint::FAutoBlueprintWidgetWriteResult WriteResult =
+		AutoBlueprint::CompileAndSaveWidgetBlueprint(*Blueprint.Get(), Request.bSave);
+	Result.bCompiled = WriteResult.bCompiled;
+	Result.bSaved = WriteResult.bSaved;
+	Result.Diagnostics.Append(MoveTemp(WriteResult.Diagnostics));
+	Result.bSuccess = Result.bCompiled && (!Request.bSave || Result.bSaved);
+	return Result;
+}
+
+FAutoBlueprintBatchBuildResult UAutoBlueprintSubsystem::GenerateBatch(const FAutoBlueprintBatchRequest& Request)
+{
+	// TODO: implement batch scheduling and aggregation after general layout requests are available.
+	// Do not loop over BuildSmokeTestWidget here: this API must remain free of asset side effects.
+	FAutoBlueprintDiagnostic Diagnostic;
+	Diagnostic.Code = TEXT("NOT_IMPLEMENTED");
+	Diagnostic.Message = TEXT("GenerateBatch is reserved for future implementation. No assets were created or saved.");
+
+	FAutoBlueprintBatchBuildResult Result;
+	Result.Diagnostics.Add(Diagnostic);
+	Result.Results.SetNum(Request.Requests.Num());
+	for (FAutoBlueprintBuildResult& Item : Result.Results)
+	{
+		// No path validation or build ran; creation/compile/save fields retain their defaults.
+		Item.Diagnostics.Add(Diagnostic);
+	}
 	return Result;
 }

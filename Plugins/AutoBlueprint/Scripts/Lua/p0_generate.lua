@@ -9,12 +9,6 @@ local function formatDiagnostics(diagnostics)
     return table.concat(messages, "\n")
 end
 
-local function printPackages(label, packages)
-    for _, packagePath in ipairs(packages:ToTable()) do
-        print(label .. packagePath)
-    end
-end
-
 function module.run(packagePath)
     local request = UE.FAutoBlueprintSmokeTestRequest()
     request.PackagePath = packagePath
@@ -23,24 +17,36 @@ function module.run(packagePath)
     request.bSave = true
 
     local result = UE.UAutoBlueprintLibrary.BuildSmokeTestWidget(request)
-    -- Also exercise reflected booleans and TArray<USTRUCT> return values.
+    -- Exercise the single-UI contract through real reflected fields.
     assert(type(result.bSuccess) == "boolean", "bSuccess must be a Lua boolean")
+    assert(type(result.bAssetCreated) == "boolean", "bAssetCreated must be a Lua boolean")
     assert(type(result.bCompiled) == "boolean", "bCompiled must be a Lua boolean")
     assert(type(result.bSaved) == "boolean", "bSaved must be a Lua boolean")
-    printPackages("Created asset: ", result.CreatedAssets)
-    printPackages("Saved package: ", result.SavedPackages)
-    printPackages("Unsaved package: ", result.UnsavedPackages)
+    assert(type(result.TargetAssetPath) == "string", "TargetAssetPath must be a Lua string")
+    assert(type(result.CreatedPackageName) == "string", "CreatedPackageName must be a Lua string")
+
+    if result.bAssetCreated then
+        print("Created asset: " .. result.TargetAssetPath)
+    end
+    -- A package may exist even when Widget Blueprint creation failed.
+    if result.CreatedPackageName ~= "" then
+        local label = result.bSaved and "Saved package: " or "Unsaved package: "
+        print(label .. result.CreatedPackageName)
+    end
 
     local diagnostics = formatDiagnostics(result.Diagnostics)
     if not result.bSuccess then
         error("Widget generation failed:\n" .. diagnostics)
     end
+    assert(result.bAssetCreated, "Widget generation returned without creating the target asset")
+    assert(result.TargetAssetPath ~= "", "Widget generation returned without a target asset path")
+    assert(result.CreatedPackageName ~= "", "Widget generation returned without a created package")
     assert(result.bCompiled, "Widget generation returned without a successful compile")
     assert(result.bSaved, "Widget generation returned without saving the requested package")
     if diagnostics ~= "" then
         print(diagnostics)
     end
-    print("Generated: " .. result.AssetPath)
+    print("Generated: " .. result.TargetAssetPath)
     return true
 end
 

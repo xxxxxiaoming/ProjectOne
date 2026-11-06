@@ -2,7 +2,7 @@
 
 采用 Lua + UnLua + C++ Editor 模块，在 ProjectOne 内开发 AutoBlueprint 插件。首个里程碑是在不启动 Play 的普通编辑状态下，通过 Lua 调用 C++ 创建 Widget Blueprint，编译保存后在新编辑器会话中重新打开。此后逐步补齐资源、布局、控件和交付验证。
 
-版本：0.2 草案；日期：2026-10-30。目标环境：UE 5.3.2、UnLua 2.3.6、Win64 Editor。当前状态：P0 代码实现完成但 UE 验证待完成；P1 至 P7 待开发。
+版本：0.3 草案；日期：2026-11-06。目标环境：UE 5.3.2、UnLua 2.3.6、Win64 Editor。当前状态：P0 原有版本已提交本地验证通过记录；本次单 UI 结果契约与批量 TODO API 调整待本地回归；P1 至 P7 待开发。
 
 依据：[架构设计草案](Architecture.md)、[编码规范 Constitution](constitution.md)。仓库源文件位于 `Plugins/AutoBlueprint/Docs/plan.md`，与架构设计和编码规范放在同一目录。
 
@@ -37,7 +37,7 @@ flowchart TD
 
 ## P0 验证无需 Play 的 Lua 生成链路
 
-实现状态：最小 Editor 插件、固定树生成、Lua 示例及失败测试已准备；UE 完整编译、生成/保存、新会话重开和 Automation 测试由本地验证。入口和记录见 [P0 代码与本地验证](P0-Validation.md)。独立 Lua 脚本流程的 9 项检查在云端通过，不代表 P0 已验收。
+实现状态：最小 Editor 插件、固定树生成、Lua 示例及失败测试的原有版本已完成本地验证。本次将结果限定为单个 UI，编译保存返回独立结果，并预留无资产副作用的 `GenerateBatch` TODO API；批量执行尚未实现。UE 测试扩展为 5 项，独立 Lua 测试扩展为 15 项，本次均待执行。旧版 9 项 Lua 检查通过记录仅适用于旧版。入口、字段迁移和验证记录见 [P0 代码与本地验证](P0-Validation.md)。
 
 先证明新技术路线可行，再扩大控件范围。该阶段包含验证所需的最小项目 Editor 模块、Lua 宿主和反射入口，其可复用代码在 P1 完善为正式框架。
 
@@ -92,8 +92,8 @@ flowchart TD
 
 - 通过 Lua 的 `ValidateLayoutFile` 和 `BuildFromLayoutFile` 门面读取布局文件，再委托 C++ 核心。
 - 构建唯一根节点、控件名称、变量开关和合法父子关系，首先覆盖 Canvas、TextBlock、Button。
-- 设置基本 Slot 和属性，标记结构变更、编译并检查诊断，再保存必要包。
-- 对所有写入入口应用 CreateOnly；编译失败不保存目标 Widget，逐包收集保存结果。
+- 设置基本 Slot 和属性，标记结构变更、编译并检查诊断，再按请求保存目标 Widget 包。
+- 对所有写入入口应用 CreateOnly；编译失败不保存目标 Widget，每个 UI 独立记录创建、编译和目标包保存状态。
 - 输出结构化生成报告，验证普通失败不会被 Lua 封装吞掉。
 
 交付：完整的 JSON → Lua/C++ → `.uasset` 链路及最小布局样例。
@@ -104,6 +104,7 @@ flowchart TD
 
 开发任务：
 
+- 在实现纹理导入前设计独立的资源导入结果及逐包记录，由任务报告组合资源与 Widget 结果；保持单 UI `bSaved` 只代表目标 Widget 包。
 - 支持复用已有 Texture2D、从指定 PNG/JPG 导入新纹理，分别处理源文件、包名与对象路径。
 - 检查文件、LFS 内容、资产类型和命名冲突，默认不覆盖或重导入共享纹理。
 - 支持 Image 画刷、线性颜色、透明度、Image/Box 绘制与九宫格边距。
@@ -164,6 +165,8 @@ flowchart TD
 
 后续优先增加 ScrollBox，验证普通容器扩展方式；再增加 ListView，独立设计数据项对象、Entry Widget Class、`IUserObjectListEntry`、条目复用与刷新。业务 UnLua 绑定、动画、自定义焦点效果、覆盖重建及增量更新分别定义范围和验收，不混入首版。
 
+`GenerateBatch` 当前仅保留可调用的 TODO 入口，返回 `NOT_IMPLEMENTED` 并为每个请求保留失败结果；不会调用单次生成器。真正的批量调度、失败策略、汇总查询及通用请求模型待后续单独实现，不计入本次 P0 交付。
+
 新增控件应扩展类型登记、属性/Slot/子节点策略、校验、能力说明与测试。C++ 核心不依赖 Lua 文件的具体写法；Lua 通过门面调用，布局 JSON 继续共用同一协议。
 
 ## 4 完成标准与状态记录
@@ -185,3 +188,4 @@ flowchart TD
 | 版本 | 日期 | 内容 |
 | --- | --- | --- |
 | 0.2 草案 | 2026-10-30 | 采用 Lua/UnLua 入口，优先验证无需 Play 的编辑器资产生成；重排 P0 至 P7 路线、交付和验收 |
+| 0.3 草案 | 2026-11-06 | 按单 UI 与批量划分结果契约，记录无副作用的批量 TODO API、字段迁移及本次回归要求 |

@@ -5,23 +5,49 @@
 #include "Editor.h"
 #include "Editor/EditorEngine.h"
 
+namespace
+{
+	UAutoBlueprintSubsystem* GetAvailableSubsystem(FAutoBlueprintDiagnostic& Diagnostic)
+	{
+		if (!AutoBlueprint::CheckEditorContext(Diagnostic.Code, Diagnostic.Message))
+		{
+			return nullptr;
+		}
+		UAutoBlueprintSubsystem* Subsystem = GEditor->GetEditorSubsystem<UAutoBlueprintSubsystem>();
+		if (!Subsystem)
+		{
+			Diagnostic.Code = TEXT("SUBSYSTEM_UNAVAILABLE");
+			Diagnostic.Message = TEXT("The AutoBlueprint editor subsystem is not initialized.");
+		}
+		return Subsystem;
+	}
+}
+
 FAutoBlueprintBuildResult UAutoBlueprintLibrary::BuildSmokeTestWidget(const FAutoBlueprintSmokeTestRequest& Request)
 {
-	FAutoBlueprintBuildResult Result;
 	FAutoBlueprintDiagnostic Diagnostic;
-	if (!AutoBlueprint::CheckEditorContext(Diagnostic.Code, Diagnostic.Message))
+	if (UAutoBlueprintSubsystem* Subsystem = GetAvailableSubsystem(Diagnostic))
 	{
-		Result.Diagnostics.Add(MoveTemp(Diagnostic));
-		return Result;
+		return Subsystem->BuildSmokeTestWidget(Request);
 	}
+	FAutoBlueprintBuildResult Result;
+	Result.Diagnostics.Add(MoveTemp(Diagnostic));
+	return Result;
+}
 
-	UAutoBlueprintSubsystem* Subsystem = GEditor->GetEditorSubsystem<UAutoBlueprintSubsystem>();
-	if (!Subsystem)
+FAutoBlueprintBatchBuildResult UAutoBlueprintLibrary::GenerateBatch(const FAutoBlueprintBatchRequest& Request)
+{
+	FAutoBlueprintDiagnostic Diagnostic;
+	if (UAutoBlueprintSubsystem* Subsystem = GetAvailableSubsystem(Diagnostic))
 	{
-		Diagnostic.Code = TEXT("SUBSYSTEM_UNAVAILABLE");
-		Diagnostic.Message = TEXT("The AutoBlueprint editor subsystem is not initialized.");
-		Result.Diagnostics.Add(MoveTemp(Diagnostic));
-		return Result;
+		return Subsystem->GenerateBatch(Request);
 	}
-	return Subsystem->BuildSmokeTestWidget(Request);
+	FAutoBlueprintBatchBuildResult Result;
+	Result.Diagnostics.Add(Diagnostic);
+	Result.Results.SetNum(Request.Requests.Num());
+	for (FAutoBlueprintBuildResult& Item : Result.Results)
+	{
+		Item.Diagnostics.Add(Diagnostic);
+	}
+	return Result;
 }

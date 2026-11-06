@@ -23,10 +23,9 @@ local function buildResult(success, compiled, saved, diagnostics)
         bSuccess = success,
         bCompiled = compiled,
         bSaved = saved,
-        AssetPath = "/Game/UI/AutoBlueprintTests/WBP_Test.WBP_Test",
-        CreatedAssets = array({ "/Game/UI/AutoBlueprintTests/WBP_Test.WBP_Test" }),
-        SavedPackages = array(saved and { "/Game/UI/AutoBlueprintTests/WBP_Test" } or {}),
-        UnsavedPackages = array(saved and {} or { "/Game/UI/AutoBlueprintTests/WBP_Test" }),
+        bAssetCreated = true,
+        TargetAssetPath = "/Game/UI/AutoBlueprintTests/WBP_Test.WBP_Test",
+        CreatedPackageName = "/Game/UI/AutoBlueprintTests/WBP_Test",
         Diagnostics = array(diagnostics or {})
     }
 end
@@ -97,4 +96,48 @@ assert(not ok and message:find("P0 script must return a table", 1, true))
 ok, message = execute("return { run = function() return false end }", "failed_task.lua")
 assert(not ok and message:find("P0 script must return true", 1, true))
 
-print("PASS: 9 P0 Lua control-flow cases (mock UE facade; no engine validation)")
+-- A validated target path is not proof that either the package or asset was created.
+local rejected = buildResult(false, false, false, {
+    { Code = "INVALID_TEXT", Message = "Title is empty" }
+})
+rejected.bAssetCreated = false
+rejected.CreatedPackageName = ""
+ok, message, calls, output = execute(generateSource, "p0_generate.lua", rejected)
+assert(not ok and calls == 1 and message:find("INVALID_TEXT: Title is empty", 1, true))
+assert(not output:find("Created asset:", 1, true))
+assert(not output:find("Saved package:", 1, true))
+assert(not output:find("Unsaved package:", 1, true))
+assert(not output:find("Generated:", 1, true))
+
+-- The package survives a subsequent asset-creation failure and must still be reported.
+local packageOnly = buildResult(false, false, false, {
+    { Code = "ASSET_CREATE_FAILED", Message = "Blueprint creation failed" }
+})
+packageOnly.bAssetCreated = false
+ok, message, calls, output = execute(generateSource, "p0_generate.lua", packageOnly)
+assert(not ok and calls == 1 and message:find("ASSET_CREATE_FAILED", 1, true))
+assert(output:find("Unsaved package: " .. packageOnly.CreatedPackageName, 1, true))
+assert(not output:find("Created asset:", 1, true))
+assert(not output:find("Generated:", 1, true))
+
+local invalidCreated = buildResult(true, true, true)
+invalidCreated.bAssetCreated = 1
+ok, message = execute(generateSource, "p0_generate.lua", invalidCreated)
+assert(not ok and message:find("bAssetCreated must be a Lua boolean", 1, true))
+
+local missingAsset = buildResult(true, true, true)
+missingAsset.bAssetCreated = false
+ok, message = execute(generateSource, "p0_generate.lua", missingAsset)
+assert(not ok and message:find("without creating the target asset", 1, true))
+
+local missingPackage = buildResult(true, true, true)
+missingPackage.CreatedPackageName = ""
+ok, message = execute(generateSource, "p0_generate.lua", missingPackage)
+assert(not ok and message:find("without a created package", 1, true))
+
+local missingTarget = buildResult(true, true, true)
+missingTarget.TargetAssetPath = ""
+ok, message = execute(generateSource, "p0_generate.lua", missingTarget)
+assert(not ok and message:find("without a target asset path", 1, true))
+
+print("PASS: 15 P0 Lua control-flow cases (mock UE facade; no engine validation)")

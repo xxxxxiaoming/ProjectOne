@@ -1,6 +1,6 @@
 # AutoBlueprint 项目插件架构设计草案
 
-本方案用于在 ProjectOne 项目内实现 AutoBlueprint 编辑器插件：通过 Lua + UnLua 调用 C++ 编辑器核心，把经过审阅的 JSON 布局配置转换为标准 User Widget Blueprint `.uasset`，在 UMG Designer 中打开即可查看和编辑控件树。目标版本为 UE 5.3.2、UnLua 2.3.6，首版以 Win64 Editor 为验证基线。版本为 0.2 草案，更新日期 2026-10-30；接口和示例均为拟定设计。
+本方案用于在 ProjectOne 项目内实现 AutoBlueprint 编辑器插件：通过 Lua + UnLua 调用 C++ 编辑器核心，把经过审阅的 JSON 布局配置转换为标准 User Widget Blueprint `.uasset`，在 UMG Designer 中打开即可查看和编辑控件树。目标版本为 UE 5.3.2、UnLua 2.3.6，首版以 Win64 Editor 为验证基线。版本为 0.3 草案，更新日期 2026-11-06；通用布局接口仍为拟定设计，已实现的 P0 接口及本次结果契约见第 8 节和 P0-Validation.md。
 
 ## 1 范围与待确认项
 
@@ -369,11 +369,24 @@ public:
 
 | 反射类型 | C++ 和 Lua 使用的拟定字段 |
 | --- | --- |
-| `FAutoBlueprintDiagnostic` | Severity、Code、JsonPath、WidgetName、Message |
+| `FAutoBlueprintDiagnostic` | Severity、Code、JsonPath、WidgetName、AssetPath、Message |
 | `FAutoBlueprintValidationResult` | bValid、Diagnostics、PlannedImports、PlannedAssetPath |
 | `FAutoBlueprintBuildOptions` | WritePolicy（默认 CreateOnly）、bSave（默认 true）、bOpenEditor（默认 false） |
-| `FAutoBlueprintBuildResult` | bSuccess、bCompiled、bSaved、AssetPath、Diagnostics、CreatedAssets、SavedPackages、UnsavedPackages、ReportFile |
+| `FAutoBlueprintBuildResult` | 单个 UI：bSuccess、bAssetCreated、bCompiled、bSaved、TargetAssetPath、CreatedPackageName、Diagnostics |
+| `FAutoBlueprintBatchRequest` | Requests；P0 占位输入为固定样例请求数组，通用布局请求在 P2/P3 设计 |
+| `FAutoBlueprintBatchBuildResult` | Results（与请求顺序一致）、Diagnostics（批量级错误）；无汇总 bSaved |
 | `EAutoBlueprintWritePolicy` | 首版仅 CreateOnly；重建策略留待后续设计 |
+
+当前单次构建严格对应一个 Widget Blueprint 和一个新建目标 Package。批量生成通过独立的请求与结果承载多个 UI，不能把多个 UI 的状态累加到同一个 `FAutoBlueprintBuildResult`：
+
+- `TargetAssetPath` 是路径校验后的目标对象路径；只有 `bAssetCreated=true` 才能说明该蓝图已创建。
+- `CreatedPackageName` 只记录本次实际创建的包。包创建成功、蓝图创建失败时仍保留该名称；遇到已有包冲突时为空。
+- `bSaved` 仅表示本次操作成功保存了这个目标包。`bSave=false` 且构建/编译成功时，`bSuccess=true`、`bSaved=false`。
+- 编译保存函数返回独立的内部写入结果，子系统将其组合到本次构建结果；不会修改其他构建或批量结果。
+- `GenerateBatch(const FAutoBlueprintBatchRequest&)` 已预留为可反射调用的 TODO API。正常编辑上下文中返回批量级及逐项 `NOT_IMPLEMENTED`，不进行路径校验、创建、编译或保存；空请求也明确报错。每个请求保留对应的结果位置。
+- 批量汇总、停止/继续策略和通用布局请求仍待后续实现；汇总将由逐项结果计算。不得用空数组推断“全部保存”，也不承诺跨包回滚。
+
+这次调整属于 P0 C++/Lua API 的破坏性变更，旧的结果字段不保留别名；迁移说明见 [P0-Validation.md](P0-Validation.md)。布局 JSON 的 `schema_version` 未改变。P4 导入纹理会产生额外资源包，必须先独立设计资源导入结果与逐包记录，再由任务报告组合；不能改变单 UI 结果的 `bSaved` 含义。
 
 返回类型使用 USTRUCT/UENUM 和 UPROPERTY，使 UnLua 能读取结果。Lua 访问反射字段保留 C++ 实际名称，例如 `result.bSuccess` 和 `options.bSave`；JSON 与磁盘报告继续使用约定的 `lower_snake_case` 字段。验证可读取文件、检查已有资产与资源类型，但不创建、导入或保存资产；构建时重新校验，避免预检与执行间状态变化。
 
@@ -407,7 +420,7 @@ if not result.bSuccess then
     error("Widget generation failed")
 end
 
-print("Generated: " .. result.AssetPath)
+print("Generated: " .. result.TargetAssetPath)
 ```
 
 首版提供编辑器菜单或受控命令入口，由 EditorLuaRunner 按任务创建独立 `UnLua::FLuaEnv`，加载插件 `Scripts/Lua/` 下的工具脚本，配置局部模块查找路径，并在任务结束释放环境。不得依赖游戏 BeginPlay、全局切换 UnLua 游戏环境状态或执行项目默认 Lua 启动模块；初始化和关闭行为通过 P0 实测确认。
@@ -426,7 +439,7 @@ print("Generated: " .. result.AssetPath)
 
 5. **应用属性与编译。** 写入资源、样式和属性，标记 Blueprint 结构变更，再使用 UE 蓝图编译流程。任何编译错误都阻止目标 Widget 资产保存，警告进入报告。
 
-6. **保存与回报。** 按依赖关系保存纹理和 Widget 包，逐包检查结果并记录来源、schema 版本和报告。只有请求保存且所有必要包保存成功，Lua 结果才返回 `bSaved=true`；磁盘报告对应字段为 `saved=true`。
+6. **保存与回报。** 单次 Widget 构建只保存其目标包，成功后该结果的 `bSaved=true`。未来 P4 的纹理导入由独立资源结果逐包记录，再按依赖关系与 Widget 结果组成任务报告；只有所有请求要求的步骤成功才可宣称整个任务成功。批量结果不存储含义模糊的 `bSaved`，不得把某一个包保存成功当成整个任务保存成功。
 
 7. **重新打开验收。** 从磁盘重新加载或在新的编辑器会话打开，验证树、资源、变量与运行时实例化，而不是只检查文件是否存在。
 
@@ -474,4 +487,4 @@ print("Generated: " .. result.AssetPath)
 
 现有收银 UI 的 `ASSET_MAP.md`、`UMG_LAYOUT.md` 与交互稿作为布局和命名依据。其中整板 JPG 应作为参考，不能用一张整板图片代替可编辑控件树；缺少独立切图的区域需要补图，或在确认后用原生控件组合表达。
 
-版本 0.2 草案以 Lua + UnLua + C++ 编辑器核心为实施基线。首版使用 CreateOnly，业务事件绑定、覆盖重建及增量更新留作后续能力。P0 源码已准备，当前实现与验证步骤以 `P0-Validation.md` 为准。UE 编译与无需 Play 的生成、保存、新会话重开仍待本地验证；通过后再推进后续阶段。
+版本 0.3 草案以 Lua + UnLua + C++ 编辑器核心为实施基线。首版使用 CreateOnly，业务事件绑定、覆盖重建及增量更新留作后续能力。P0 原有版本的本地验证记录已提交；本次单 UI 结果契约和批量 TODO 接口调整仍需重新编译及验证，具体记录见 `P0-Validation.md`。

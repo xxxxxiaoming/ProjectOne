@@ -57,35 +57,61 @@ struct AUTOBLUEPRINTEDITOR_API FAutoBlueprintSmokeTestRequest
 	bool bSave = true;
 };
 
+/** One Widget Blueprint in one newly created package. Never reuse this as a batch accumulator. */
 USTRUCT(BlueprintType)
 struct AUTOBLUEPRINTEDITOR_API FAutoBlueprintBuildResult
 {
 	GENERATED_BODY()
 
-	/** True when the build, compile, and requested save all succeed. */
+	/** True when this request's build, compile, and requested save all succeed. */
 	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
 	bool bSuccess = false;
 
+	/** True only after this operation creates the target Widget Blueprint. */
+	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
+	bool bAssetCreated = false;
+
+	/** Compile outcome for this Widget Blueprint only. */
 	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
 	bool bCompiled = false;
 
-	/** Always false when saving was not requested. */
+	/** True only if this call saved CreatedPackageName; false for unrequested, skipped, or failed saves. */
 	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
 	bool bSaved = false;
 
-	/** Intended object path; only CreatedAssets confirms that an object was created. */
+	/** Intended object path after path validation; does not prove that an asset was created. */
 	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
-	FString AssetPath;
+	FString TargetAssetPath;
+
+	/** Package actually created by this operation, even if asset creation later fails. Empty otherwise. */
+	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
+	FString CreatedPackageName;
 
 	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
 	TArray<FAutoBlueprintDiagnostic> Diagnostics;
+};
 
-	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
-	TArray<FString> CreatedAssets;
+/** Reserved batch input. General layout requests belong to P2/P3; P0 uses fixed fixture requests. */
+USTRUCT(BlueprintType)
+struct AUTOBLUEPRINTEDITOR_API FAutoBlueprintBatchRequest
+{
+	GENERATED_BODY()
 
-	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
-	TArray<FString> SavedPackages;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AutoBlueprint")
+	TArray<FAutoBlueprintSmokeTestRequest> Requests;
+};
 
+/** Ordered per-request results; deliberately has no aggregate bSaved or duplicate package lists. */
+USTRUCT(BlueprintType)
+struct AUTOBLUEPRINTEDITOR_API FAutoBlueprintBatchBuildResult
+{
+	GENERATED_BODY()
+
+	/** One entry per input request, in the same order, including requests that did not run. */
 	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
-	TArray<FString> UnsavedPackages;
+	TArray<FAutoBlueprintBuildResult> Results;
+
+	/** Batch-level failures, including NOT_IMPLEMENTED for an empty batch. */
+	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
+	TArray<FAutoBlueprintDiagnostic> Diagnostics;
 };
