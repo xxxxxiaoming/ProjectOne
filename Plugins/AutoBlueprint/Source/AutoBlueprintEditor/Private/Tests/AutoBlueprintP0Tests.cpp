@@ -14,6 +14,7 @@
 #include "UObject/Package.h"
 #include "UObject/StrongObjectPtr.h"
 #include "UObject/UObjectGlobals.h"
+#include "WidgetBlueprint.h"
 
 namespace
 {
@@ -96,7 +97,17 @@ bool FAutoBlueprintP0LoadedPackageConflictTest::RunTest(const FString& Parameter
 	FAutoBlueprintSmokeTestRequest Request;
 	Request.PackagePath = NewTestPackagePath();
 	TStrongObjectPtr<UPackage> ExistingPackage(CreatePackage(*Request.PackagePath));
-	TStrongObjectPtr<UObject> ExistingObject(NewObject<UObject>(ExistingPackage.Get(), TEXT("ExistingObject"), RF_Transient));
+	if (!TestNotNull(TEXT("Test package must be created"), ExistingPackage.Get()))
+	{
+		return false;
+	}
+	// UObject is abstract in UE 5.3; use a concrete transient object for the conflict fixture.
+	TStrongObjectPtr<UWidgetBlueprint> ExistingObject(NewObject<UWidgetBlueprint>(
+		ExistingPackage.Get(), TEXT("ExistingObject"), RF_Transient));
+	if (!TestNotNull(TEXT("Test Widget Blueprint must be created"), ExistingObject.Get()))
+	{
+		return false;
+	}
 	ExistingPackage->SetDirtyFlag(true);
 
 	const FAutoBlueprintBuildResult Result = UAutoBlueprintLibrary::BuildSmokeTestWidget(Request);
@@ -104,12 +115,12 @@ bool FAutoBlueprintP0LoadedPackageConflictTest::RunTest(const FString& Parameter
 	TestTrue(TEXT("Conflict must be reported"), HasCode(Result, TEXT("ASSET_ALREADY_EXISTS")));
 	TestTrue(TEXT("No replacement asset may be created"), Result.CreatedAssets.IsEmpty());
 	TestTrue(TEXT("Original package identity must remain"), FindPackage(nullptr, *Request.PackagePath) == ExistingPackage.Get());
-	TestTrue(TEXT("Original object identity must remain"),
-		FindObject<UObject>(ExistingPackage.Get(), TEXT("ExistingObject")) == ExistingObject.Get());
+	TestTrue(TEXT("Original Widget Blueprint identity must remain"),
+		FindObject<UWidgetBlueprint>(ExistingPackage.Get(), TEXT("ExistingObject")) == ExistingObject.Get());
 	TestTrue(TEXT("Original dirty state must remain"), ExistingPackage->IsDirty());
 	TestFalse(TEXT("No disk package may be written"), FPackageName::DoesPackageExist(Request.PackagePath));
 
-	// Only the empty package owned by this test is cleaned; no asset is deleted.
+	// Only clear the dirty flag of this test-owned package; no asset is saved or deleted.
 	ExistingPackage->SetDirtyFlag(false);
 	return true;
 }
