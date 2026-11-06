@@ -121,13 +121,13 @@ P0 的两份脚本是独立模块，不使用 `require`。宿主只接受这两�
 
 本次为 P0 C++/Lua API 的破坏性调整，需关闭编辑器、完整重编译并重启；不要依赖 Live Coding 更新反射字段。修改调用代码或蓝图节点后重新编译调用方。布局 JSON 协议尚未实现，本次不改变 `schema_version`。
 
-| 原字段 | 当前读取方式 |
-| --- | --- |
-| 结果的 `AssetPath` | `TargetAssetPath`，表示已校验的目标路径；诊断中的 `AssetPath` 保持原名 |
-| `CreatedAssets` | `bAssetCreated` 判断目标蓝图是否创建成功，成功时路径为 `TargetAssetPath` |
-| `SavedPackages` | `bSaved=true` 时，`CreatedPackageName` 为本次保存成功的包 |
-| `UnsavedPackages` | `CreatedPackageName` 非空且 `bSaved=false`，代表本次创建但未保存的包 |
-| 复用一个结果累计多个 UI | 每个请求保留独立结果；批量结构的 `Results` 按输入顺序对应，包含失败或未执行的请求 |
+| 原字段               | 当前读取方式                                                |
+| ----------------- | ----------------------------------------------------- |
+| 结果的 `AssetPath`   | `TargetAssetPath`，表示已校验的目标路径；诊断中的 `AssetPath` 保持原名    |
+| `CreatedAssets`   | `bAssetCreated` 判断目标蓝图是否创建成功，成功时路径为 `TargetAssetPath` |
+| `SavedPackages`   | `bSaved=true` 时，`CreatedPackageName` 为本次保存成功的包        |
+| `UnsavedPackages` | `CreatedPackageName` 非空且 `bSaved=false`，代表本次创建但未保存的包  |
+| 复用一个结果累计多个 UI     | 每个请求保留独立结果；批量结构的 `Results` 按输入顺序对应，包含失败或未执行的请求        |
 
 单次结果的 `bSuccess` 表示请求所要求的构建、编译及可选保存全部完成；`bSave=false` 时可以成功且未保存。结果是本次调用结束时的记录，不会追踪用户之后手工保存或修改的行为。未分配包与创建包后失败通过 `CreatedPackageName` 区分，不能仅看 `bSaved=false`。
 
@@ -151,10 +151,10 @@ end
 
 `FAutoBlueprintBatchBuildResult` 不提供汇总 `bSaved` 或重复的资产/包数组。批量执行、停止/继续策略及汇总查询仍为 TODO；不得把空的 `Results` 或“没有未保存包”解释为全部成功。
 
-| 本次检查 | 状态 |
-| --- | --- |
-| 新旧字段引用、反射声明、源文件换行及文档链接静态检查 | 已通过；不等价于 UHT/UE 编译 |
-| UE 5.3.2 完整编译 | 待本地执行 |
-| 五项 `AutoBlueprint.P0` 自动化测试 | 待本地执行 |
-| 独立 Lua 的 15 项脚本流程检查 | 待执行；当前云终端不可用 |
-| 新名字生成、保存及新编辑器会话重开 | 待本地回归 |
+| 本次检查                        | 状态                 |
+| --------------------------- | ------------------ |
+| 新旧字段引用、反射声明、源文件换行及文档链接静态检查  | 已通过；不等价于 UHT/UE 编译 |
+| UE 5.3.2 完整编译               | ✅                  |
+| 五项 `AutoBlueprint.P0` 自动化测试 | ✅                  |
+| 独立 Lua 的 15 项脚本流程检查         | ✅                  |
+| 新名字生成、保存及新编辑器会话重开           | ✅                  |

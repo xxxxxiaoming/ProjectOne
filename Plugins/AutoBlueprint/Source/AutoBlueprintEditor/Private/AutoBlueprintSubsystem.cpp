@@ -122,6 +122,8 @@ FAutoBlueprintBuildResult UAutoBlueprintSubsystem::BuildSmokeTestWidget(const FA
 	Result.bCompiled = WriteResult.bCompiled;
 	Result.bSaved = WriteResult.bSaved;
 	Result.Diagnostics.Append(MoveTemp(WriteResult.Diagnostics));
+	// If Request.bSave is false, then Result.bCompiled is true -> Result.bSuccess is true.
+	// If Request.bSave is true, then Result.bCompiled + Result.bSaved both true -> Result.bSuccess is true.
 	Result.bSuccess = Result.bCompiled && (!Request.bSave || Result.bSaved);
 	return Result;
 }
