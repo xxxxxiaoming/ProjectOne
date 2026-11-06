@@ -109,9 +109,7 @@ P0 的两份脚本是独立模块，不使用 `require`。宿主只接受这两�
 | 关闭编辑器再打开，树/变量/文字保留              | ✅               |
 | 同名磁盘资产及未保存资产均不被改写               | ✅               |
 | PIE/SIE 拒绝、连续执行、异常后重试           | ✅               |
-| 三项 UE Automation 测试             | ❎               |
+| 三项 UE Automation 测试             | ✅               |
 | 原有游戏 Lua 启动和行为                  | ✅               |
 | 独立 Lua 5.4.3 的 9 项脚本流程检查        | 云端通过；使用模拟 UE 接口 |
 | 描述文件、源码格式、文档链接检查                | 云端检查；不等价于 UE 编译 |
-三项 UE Automation 测试，出现Exception，验证不通过：
-Exception 0x80000003 encountered at address 0x7ffdf7fd70ab
