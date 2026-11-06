@@ -1,6 +1,6 @@
 # P0 代码与本地验证
 
-实现状态：P0 原有版本的 UE 5.3.2 本地验证已通过并提交，记录保留在第 6 节。本次调整了反射结果字段、编译保存接口和批量 TODO API，需要重新完整编译与回归；本次验证状态见第 7 节。当前云终端不可用，修改通过 GitHub 完成，未执行本次 UE 或独立 Lua 测试。
+实现状态：P0 原有版本及结果重构已由用户本地验证通过，历史记录保留在第 6、7 节（最新基线 `fff6a1b`）。P1 更新共享宿主和 SDK，原 P0 命令继续可用；本次兼容回归见 [P1-Validation.md](P1-Validation.md)，历史通过记录不代表 P1 已验证。
 
 ## 1 编译并运行
 
@@ -15,7 +15,7 @@ AutoBlueprint.P0.Generate /Game/UI/AutoBlueprintTests/WBP_P0_Review01
 
 命令必须提供一个明确的新包名。`ProjectOne.uproject` 已为 Editor 目标启用 AutoBlueprint，插件声明依赖项目已有的 UnLua。无需安装 Python 插件或修改 Engine/UnLua 源码。
 
-成功时日志应包含 `Saved package:`、`Generated:` 和 `P0 Lua task completed`。目标文件应为 `Content/UI/AutoBlueprintTests/WBP_P0_Review01.uasset`；在 Content Browser 中打开该 Widget Blueprint。
+成功时日志应包含 `Saved package:`、`Generated:` 和 `AutoBlueprint Lua task completed`。目标文件应为 `Content/UI/AutoBlueprintTests/WBP_P0_Review01.uasset`；在 Content Browser 中打开该 Widget Blueprint。
 
 ## 2 检查控件树和持久化
 
@@ -97,7 +97,7 @@ lua Plugins/AutoBlueprint/Scripts/Tests/p0_scripts_test.lua
 
 `BuildSmokeTestWidget` 为 P0 固定样例接口，一次只生成一个 UI 及其目标包。`GenerateBatch` 是反射可调用的 TODO API，返回 `FAutoBlueprintBatchBuildResult`：正常编辑上下文下批量级和逐项诊断均为 `NOT_IMPLEMENTED`，包括空批量；不校验路径或创建/编译/保存资产。架构中的 `ValidateLayoutFile`、`BuildFromLayoutFile`、JSON Schema 和控件注册表仍属于 P2/P3，尚未实现。固定树代码单独放置，后续复用门面、子系统、诊断、编译保存流程，再接入通用构建器。
 
-P0 的两份脚本是独立模块，不使用 `require`。宿主只接受这两个固定文件，执行前清空该任务环境的模块搜索路径；通用受控模块加载留到 P1。UnLua 自身的环境初始化仍会执行其内置初始化和已注册回调，工具不调用游戏的 `Start`/`SetActive`，不执行项目默认启动模块。该入口用于可信的项目工具脚本，不提供不可信代码沙箱。
+P1 已将两份 P0 脚本接入通用宿主；`p0_generate.lua` 通过 `require("auto_blueprint")` 复用结果处理，入口改为 `run(arguments)`，P0 控制台命令参数不变。加载器仅发现插件 `Scripts/Lua/` 的模块，约束见 [P1-Validation.md](P1-Validation.md)。UnLua 初始化仍执行其内置初始化与已注册回调，工具不调用游戏的 `Start`/`SetActive` 或项目默认启动模块。
 
 `bSave=false` 表示“生成并编译，但不落盘”，会留下新建的未保存资产，不能当作只读预检。同名重试仍会被拒绝。编译/保存失败也可能留下本次创建的未保存包；`CreatedPackageName` 非空且 `bSaved=false` 表示本次已创建但未保存的包，包创建成功但蓝图创建失败时也会报告；插件不自动删除用户资产。Lua 脚本在保存后再报错时，先前的保存结果仍有效，`Saved package:` 日志保留，不承诺回滚。
 
@@ -133,7 +133,7 @@ P0 的两份脚本是独立模块，不使用 `require`。宿主只接受这两�
 
 内部 `CompileAndSaveWidgetBlueprint` 现在返回独立的写入结果，由子系统合并到本次 UI 结果，不再接收并修改一个外部 `FAutoBlueprintBuildResult&`。
 
-批量 TODO API 的 Lua 形状如下（需在 AutoBlueprint 的编辑器 Lua 环境内运行，当前 P0 控制台入口仍仅加载两份固定脚本）：
+批量 TODO API 的 Lua 形状如下（需在 AutoBlueprint 的编辑器 Lua 环境内运行，P1 的 `AutoBlueprint.Run` 可加载插件工具目录下的自定义脚本）：
 
 ```lua
 local request = UE.FAutoBlueprintBatchRequest()

@@ -13,6 +13,7 @@ local runner = readFile(pluginRoot .. "/Source/AutoBlueprintEditor/Private/Scrip
 local bootstrap = assert(runner:match('TEXT%(R"lua%((.-)%)lua"%)'), "C++ bootstrap not found")
 local generateSource = readFile(pluginRoot .. "/Scripts/Lua/p0_generate.lua")
 local errorSource = readFile(pluginRoot .. "/Scripts/Lua/p0_error.lua")
+local apiSource = readFile(pluginRoot .. "/Scripts/Lua/auto_blueprint.lua")
 
 local function array(values)
     return { ToTable = function() return values end }
@@ -35,7 +36,15 @@ local function execute(source, filename, result)
     local calls = 0
     local packagePath = "/Game/UI/AutoBlueprintTests/WBP_Test"
     local environment = setmetatable({
-        AutoBlueprintTask = { source = source, chunkName = "@" .. filename, packagePath = packagePath },
+        AutoBlueprintTask = {
+            source = source, chunkName = "@" .. filename, arguments = { packagePath },
+            readModule = function(name)
+                if name == "auto_blueprint" then
+                    return apiSource, "@auto_blueprint.lua"
+                end
+                return nil, "LUA_SCRIPT_NOT_FOUND: " .. name
+            end
+        },
         package = { path = "game/?.lua", cpath = "native/?.dll", searchers = {} },
         print = function(message) output[#output + 1] = message end,
         UE = {
@@ -55,7 +64,7 @@ local function execute(source, filename, result)
     environment.load = function(chunk, name, mode)
         return load(chunk, name, mode, environment)
     end
-    local ok, message = assert(load(bootstrap, "@AutoBlueprint/P0Runner", "t", environment))()
+    local ok, message = assert(load(bootstrap, "@AutoBlueprint/ToolRunner", "t", environment))()
     assert(environment.AutoBlueprintTask == nil, "Host input should not remain globally accessible")
     assert(environment.package.path == "" and environment.package.cpath == "")
     assert(next(environment.package.searchers) == nil)
@@ -92,9 +101,9 @@ assert(message:find("stack traceback:", 1, true))
 ok, message = execute("local =", "invalid_syntax.lua")
 assert(not ok and message:find("invalid_syntax.lua:", 1, true))
 ok, message = execute("return false", "invalid_module.lua")
-assert(not ok and message:find("P0 script must return a table", 1, true))
+assert(not ok and message:find("Tool script must return a table", 1, true))
 ok, message = execute("return { run = function() return false end }", "failed_task.lua")
-assert(not ok and message:find("P0 script must return true", 1, true))
+assert(not ok and message:find("Tool script must return true", 1, true))
 
 -- A validated target path is not proof that either the package or asset was created.
 local rejected = buildResult(false, false, false, {

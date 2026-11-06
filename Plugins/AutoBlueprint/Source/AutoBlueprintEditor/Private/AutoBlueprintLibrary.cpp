@@ -51,3 +51,16 @@ FAutoBlueprintBatchBuildResult UAutoBlueprintLibrary::GenerateBatch(const FAutoB
 	}
 	return Result;
 }
+
+FAutoBlueprintLuaRunResult UAutoBlueprintLibrary::RunEditorScript(const FAutoBlueprintLuaRunRequest& Request)
+{
+	FAutoBlueprintDiagnostic Diagnostic;
+	if (UAutoBlueprintSubsystem* Subsystem = GetAvailableSubsystem(Diagnostic))
+	{
+		return Subsystem->RunEditorScript(Request);
+	}
+	FAutoBlueprintLuaRunResult Result;
+	Result.Code = MoveTemp(Diagnostic.Code);
+	Result.Message = MoveTemp(Diagnostic.Message);
+	return Result;
+}

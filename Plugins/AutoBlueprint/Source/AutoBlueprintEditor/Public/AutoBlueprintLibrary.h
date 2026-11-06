@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "AutoBlueprintTypes.h"
+#include "AutoBlueprintLuaTypes.h"
 #include "AutoBlueprintLibrary.generated.h"
 
 /** Editor scripting facade. Generated widgets never reference this class. */
@@ -12,6 +13,15 @@ class AUTOBLUEPRINTEDITOR_API UAutoBlueprintLibrary : public UBlueprintFunctionL
 	GENERATED_BODY()
 
 public:
+	/**
+	 * Run a trusted plugin tool synchronously on the editor game thread outside PIE/SIE.
+	 * ScriptPath is relative to Scripts/Lua; module.run receives Arguments as a Lua table.
+	 * Releases the fresh task VM before returning; nested script requests are rejected.
+	 * Scripts may call build APIs. A later script failure does not roll back saved assets.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "AutoBlueprint|Tools")
+	static FAutoBlueprintLuaRunResult RunEditorScript(const FAutoBlueprintLuaRunRequest& Request);
+
 	/**
 	 * P0 only: create the fixed Canvas/Text/Button fixture using CreateOnly.
 	 * Call on the editor game thread outside PIE/SIE. Saves only when Request.bSave is true.

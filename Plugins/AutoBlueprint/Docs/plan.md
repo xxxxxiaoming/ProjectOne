@@ -2,7 +2,7 @@
 
 采用 Lua + UnLua + C++ Editor 模块，在 ProjectOne 内开发 AutoBlueprint 插件。首个里程碑是在不启动 Play 的普通编辑状态下，通过 Lua 调用 C++ 创建 Widget Blueprint，编译保存后在新编辑器会话中重新打开。此后逐步补齐资源、布局、控件和交付验证。
 
-版本：0.3 草案；日期：2026-11-06。目标环境：UE 5.3.2、UnLua 2.3.6、Win64 Editor。当前状态：P0 原有版本已提交本地验证通过记录；本次单 UI 结果契约与批量 TODO API 调整待本地回归；P1 至 P7 待开发。
+版本：0.4 草案；日期：2026-11-06。目标环境：UE 5.3.2、UnLua 2.3.6、Win64 Editor。当前状态：P0 及结果重构已由用户本地验证通过；P1 代码实现完成、待本地 review/validate；P2 至 P7 待开发。
 
 依据：[架构设计草案](Architecture.md)、[编码规范 Constitution](constitution.md)。仓库源文件位于 `Plugins/AutoBlueprint/Docs/plan.md`，与架构设计和编码规范放在同一目录。
 
@@ -37,7 +37,7 @@ flowchart TD
 
 ## P0 验证无需 Play 的 Lua 生成链路
 
-实现状态：最小 Editor 插件、固定树生成、Lua 示例及失败测试的原有版本已完成本地验证。本次将结果限定为单个 UI，编译保存返回独立结果，并预留无资产副作用的 `GenerateBatch` TODO API；批量执行尚未实现。UE 测试扩展为 5 项，独立 Lua 测试扩展为 15 项，本次均待执行。旧版 9 项 Lua 检查通过记录仅适用于旧版。入口、字段迁移和验证记录见 [P0 代码与本地验证](P0-Validation.md)。
+实现状态：P0 及单 UI 结果重构已由用户本地验证通过，5 项 UE 测试和 15 项 Lua 检查的记录已提交（`fff6a1b`）。批量执行仍为 TODO。P1 复用并更新 P0 宿主和 SDK，更新后的兼容回归待本地执行。历史记录见 [P0 代码与本地验证](P0-Validation.md)，本次检查见 [P1 代码与本地验证](P1-Validation.md)。
 
 先证明新技术路线可行，再扩大控件范围。该阶段包含验证所需的最小项目 Editor 模块、Lua 宿主和反射入口，其可复用代码在 P1 完善为正式框架。
 
@@ -57,6 +57,10 @@ flowchart TD
 环境条件：当前云端缺少 UE Editor，允许先准备代码、协议和文档，并将 UE 验证标为待完成。若技术验证遇到问题，优先调整编辑器宿主初始化或反射门面，记录问题，不以临时改回 Python 或依赖 Play 代替该目标。
 
 ## P1 完善插件与编辑器 Lua 入口
+
+实现状态：代码已完成，待用户本地 review/validate。提供 `AutoBlueprint.Run`、`AutoBlueprint.GenerateFromFile`、`AutoBlueprint.Help` 命令，保留 P0 命令；经静态反射门面和子系统执行同步任务。宿主采用独立 VM、受控模块加载、每任务缓存、异常调用栈及重入保护。交付步骤见 [P1 代码与本地验证](P1-Validation.md)。
+
+`generate_from_file.lua` 和共享 Lua API 已接通；P1 明确返回 `NOT_IMPLEMENTED`，不读取布局或生成替代 UI。JSON 协议、只读预检和通用生成仍由 P2/P3 实现。
 
 开发任务：
 
@@ -181,7 +185,7 @@ flowchart TD
 - [ ] 运行时实例化与相关 cook/打包验证完成。
 - [ ] 文档列出实际完成的检查、未验证项和已知限制。
 
-每次阶段交付说明包含变更内容、原因、相关文件、实际执行的验证、结果和仍待完成的检查。P0 源码已准备，后续阶段及 UE 验收仍按以上标准推进。
+每次交付包含变更内容、原因、相关文件、检查结果及待验证项。默认遵循 constitution 第 10 节：推送 `feature_auto_blueprint_plugin` 后等待用户 fetch、review 和 validate，默认不创建 PR。P1 待本地验收，后续阶段按用户指令推进。
 
 ## 修订记录
 
@@ -189,3 +193,4 @@ flowchart TD
 | --- | --- | --- |
 | 0.2 草案 | 2026-10-30 | 采用 Lua/UnLua 入口，优先验证无需 Play 的编辑器资产生成；重排 P0 至 P7 路线、交付和验收 |
 | 0.3 草案 | 2026-11-06 | 按单 UI 与批量划分结果契约，记录无副作用的批量 TODO API、字段迁移及本次回归要求 |
+| 0.4 草案 | 2026-11-06 | 记录 P0 重构验证通过；交付 P1 工具命令、Lua 宿主、受控模块与 SDK，布局生成保留 P2/P3 边界 |

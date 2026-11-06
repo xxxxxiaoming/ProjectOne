@@ -10,6 +10,8 @@
 #include "Kismet2/KismetEditorUtilities.h"
 #include "Misc/PackageName.h"
 #include "Templates/UnrealTemplate.h"
+#include "Scripting/EditorLuaRunner.h"
+#include "Subsystems/SubsystemCollection.h"
 #include "UObject/Package.h"
 #include "UObject/StrongObjectPtr.h"
 #include "WidgetBlueprint.h"
@@ -145,4 +147,41 @@ FAutoBlueprintBatchBuildResult UAutoBlueprintSubsystem::GenerateBatch(const FAut
 		Item.Diagnostics.Add(Diagnostic);
 	}
 	return Result;
+}
+
+void UAutoBlueprintSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+	bAcceptScriptRequests = true;
+}
+
+void UAutoBlueprintSubsystem::Deinitialize()
+{
+	// Tasks are synchronous; no VM or callback is retained by the subsystem.
+	bAcceptScriptRequests = false;
+	Super::Deinitialize();
+}
+
+FAutoBlueprintLuaRunResult UAutoBlueprintSubsystem::RunEditorScript(const FAutoBlueprintLuaRunRequest& Request)
+{
+	FAutoBlueprintLuaRunResult Result;
+	if (!AutoBlueprint::CheckEditorContext(Result.Code, Result.Message))
+	{
+		return Result;
+	}
+	if (!bAcceptScriptRequests)
+	{
+		Result.Code = TEXT("SUBSYSTEM_UNAVAILABLE");
+		Result.Message = TEXT("AutoBlueprint is not accepting tool tasks during initialization or shutdown.");
+		return Result;
+	}
+	if (bScriptInProgress || bBuildInProgress)
+	{
+		Result.Code = TEXT("EDITOR_BUSY");
+		Result.Message = TEXT("Another AutoBlueprint script or build is in progress. Nested script execution is not supported.");
+		return Result;
+	}
+	TGuardValue<bool> ScriptGuard(bScriptInProgress, true);
+	FAutoBlueprintEditorLuaRunner Runner;
+	return Runner.Run(Request);
 }

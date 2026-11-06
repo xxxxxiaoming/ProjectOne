@@ -1,6 +1,6 @@
 # AutoBlueprint 项目插件架构设计草案
 
-本方案用于在 ProjectOne 项目内实现 AutoBlueprint 编辑器插件：通过 Lua + UnLua 调用 C++ 编辑器核心，把经过审阅的 JSON 布局配置转换为标准 User Widget Blueprint `.uasset`，在 UMG Designer 中打开即可查看和编辑控件树。目标版本为 UE 5.3.2、UnLua 2.3.6，首版以 Win64 Editor 为验证基线。版本为 0.3 草案，更新日期 2026-11-06；通用布局接口仍为拟定设计，已实现的 P0 接口及本次结果契约见第 8 节和 P0-Validation.md。
+本方案用于在 ProjectOne 项目内实现 AutoBlueprint 编辑器插件：通过 Lua + UnLua 调用 C++ 编辑器核心，把经过审阅的 JSON 布局配置转换为标准 User Widget Blueprint `.uasset`，在 UMG Designer 中打开即可查看和编辑控件树。目标版本为 UE 5.3.2、UnLua 2.3.6，首版以 Win64 Editor 为验证基线。版本为 0.4 草案，更新日期 2026-11-06；通用布局接口仍为拟定设计，P0 结果契约已验证，P1 工具宿主已实现待本地验证，入口分别见 P0-Validation.md 与 P1-Validation.md。
 
 ## 1 范围与待确认项
 
@@ -311,6 +311,12 @@ Canvas 的 `offsets` 对应 `[Left, Top, Right, Bottom]`。某一轴锚点相同
 
 ## 8 C++ 与 Lua 接口框架
 
+P1 已实现 `UAutoBlueprintLibrary::RunEditorScript(const FAutoBlueprintLuaRunRequest&)`，转调编辑器子系统。请求携带插件工具目录下的相对 `ScriptPath` 和字符串 `Arguments`；结果 `FAutoBlueprintLuaRunResult` 提供脚本完成状态、错误码、原始错误/调用栈及已解析路径，与资产构建结果独立。
+
+P1 采用 Output Log 命令入口（`AutoBlueprint.Run`、`AutoBlueprint.GenerateFromFile`、`AutoBlueprint.Help`），无需额外菜单依赖。所有公开命令经过门面与子系统；子系统拒绝嵌套脚本及构建期间的脚本重入。每次任务的 `FLuaEnv` 位于调用栈上，返回前释放；模块注销全部命令，不保留跨任务 VM 或回调。
+
+`require("examples.helper")` 仅发现 `Scripts/Lua/examples/helper.lua`，使用每任务缓存与循环依赖检测，不回退到游戏或原生模块搜索路径。脚本是可信项目工具，加载路径约束不构成不可信代码沙箱。脚本返回带 `run(arguments)` 的表，任务成功需返回 true。限制与示例见 [P1-Validation.md](P1-Validation.md)。
+
 C++ 核心仍由编辑器子系统提供 ValidateLayout 和 BuildWidgetBlueprint。面向 Lua 增加静态 UFUNCTION 门面 AutoBlueprintLibrary，提供文件入口并转调子系统。以下为接口设计示意；类型定义、桥接行为与 UE 5.3.2 编译验证在实施阶段完成。
 
 ```cpp
@@ -487,4 +493,4 @@ print("Generated: " .. result.TargetAssetPath)
 
 现有收银 UI 的 `ASSET_MAP.md`、`UMG_LAYOUT.md` 与交互稿作为布局和命名依据。其中整板 JPG 应作为参考，不能用一张整板图片代替可编辑控件树；缺少独立切图的区域需要补图，或在确认后用原生控件组合表达。
 
-版本 0.3 草案以 Lua + UnLua + C++ 编辑器核心为实施基线。首版使用 CreateOnly，业务事件绑定、覆盖重建及增量更新留作后续能力。P0 原有版本的本地验证记录已提交；本次单 UI 结果契约和批量 TODO 接口调整仍需重新编译及验证，具体记录见 `P0-Validation.md`。
+版本 0.4 草案以 Lua + UnLua + C++ 编辑器核心为实施基线。首版使用 CreateOnly，业务事件绑定、覆盖重建及增量更新留作后续能力。P0 及结果重构已由用户验证；P1 代码已交付待本地验证，记录见 `P0-Validation.md` 与 `P1-Validation.md`。

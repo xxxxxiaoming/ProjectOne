@@ -1,9 +1,9 @@
 {
 	"FileVersion": 3,
-	"Version": 1,
-	"VersionName": "0.1.0-p0",
+	"Version": 2,
+	"VersionName": "0.2.0-p1",
 	"FriendlyName": "AutoBlueprint",
-	"Description": "Generate Widget Blueprints through editor-only Lua tools.",
+	"Description": "Project-local Widget Blueprint tools with a task-scoped editor Lua host.",
 	"Category": "Editor",
 	"CanContainContent": false,
 	"Modules": [
