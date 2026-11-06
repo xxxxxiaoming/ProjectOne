@@ -65,6 +65,7 @@ void AutoBlueprint::CompileAndSaveWidgetBlueprint(UWidgetBlueprint& Blueprint, b
 	}
 	if (!bSave)
 	{
+		// If no need to save, just return
 		Result.bSuccess = true;
 		return;
 	}

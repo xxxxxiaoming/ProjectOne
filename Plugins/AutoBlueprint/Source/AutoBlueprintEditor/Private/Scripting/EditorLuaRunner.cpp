@@ -68,7 +68,7 @@ FAutoBlueprintLuaRunResult FAutoBlueprintEditorLuaRunner::Run(const FString& Scr
 	const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(TEXT("AutoBlueprint"));
 	if (!Plugin.IsValid())
 	{
-		Result.Code = TEXT("LUA_SCRIPT_NOT_FOUND");
+		Result.Code = TEXT("PLUGIN_NOT_FOUND");
 		Result.Message = TEXT("Cannot locate the AutoBlueprint plugin directory.");
 		return Result;
 	}
@@ -77,7 +77,7 @@ FAutoBlueprintLuaRunResult FAutoBlueprintEditorLuaRunner::Run(const FString& Scr
 	FString Source;
 	if (!FFileHelper::LoadFileToString(Source, *ScriptPath))
 	{
-		Result.Code = TEXT("LUA_SCRIPT_NOT_FOUND");
+		Result.Code = TEXT("LUA_SCRIPT_READ_FAILED");
 		Result.Message = TEXT("Cannot read Lua script: ") + ScriptPath;
 		return Result;
 	}
