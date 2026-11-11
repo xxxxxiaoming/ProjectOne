@@ -1,6 +1,6 @@
 # P1 编辑器 Lua 工具入口与本地验证
 
-实现状态：P1 代码已完成，已由用户本地 review 和 validate 通过。基线 `fff6a1b` 的 P0/refactor 验证记录保留。UE 编译、UE 自动化、独立 Lua 检查及手动验证已通过；具体验证范围、已接受的控制台参数限制和证据以第 7 节为准。
+实现状态：P1 代码及控制台引号参数修复已完成，已由用户本地 review 和 validate 通过。基线 `fff6a1b` 的 P0/refactor 验证记录保留。UE 编译、UE 自动化、独立 Lua 检查及手动验证已通过；具体验证范围、控制台空白规范化规则和证据以第 7 节为准。
 
 ## 1 编译与入口
 
@@ -11,12 +11,20 @@
 ```text
 AutoBlueprint.Help
 AutoBlueprint.Run examples/hello.lua
-AutoBlueprint.Run examples/hello.lua hello_world 中文参数
+AutoBlueprint.Run examples/hello.lua "hello world" "中文参数"
 ```
 
 预期打印就绪信息或原样参数，以及 `AutoBlueprint Lua task completed`。这些命令不创建资产，无需点击 Play。
 
-控制台参数约定：每个参数不含空白，多词内容统一用 `_` 连接（例如 `hello_world`），不使用引号包裹参数。下划线按原样传入，不会自动还原为空格。当前控制台入口会拆分带空格的引号参数并保留引号；用户已接受该限制，不修改解析代码。此约定仅针对控制台文本入口，下面的 C++ `Arguments` 数组仍直接传递字符串。
+`AutoBlueprint.Run` 参数规则：
+
+- 含空白的参数用英文双引号包裹整个参数；同项闭合和跨项闭合均会去掉两端引号。脚本路径也允许包裹引号，但仍须通过原有路径校验。
+- `""` 保留为一个空字符串参数；引号内支持 `\"`（字面双引号）和 `\\`（字面反斜杠）。其他反斜杠按原样保留，不将 `\t` 等解释为控制字符；引号外的反斜杠不做转义。
+- UE 控制台先按空白拆分，插件再合并引号参数，因此引号内连续空白、Tab 及两端空白无法原样恢复：拆分片段之间统一补一个空格，无法保留原始空白数量。
+- 未闭合引号、未包裹整个参数的引号（如 `hello"world`、`"hello"tail`）返回 `INVALID_ARGUMENTS`，不执行 Lua，不传递部分解析结果。
+- 不含空白的参数继续直接传递；`hello_world` 中的 `_` 原样保留，无须强制以 `_` 替代空格。
+
+以上合并规则仅用于 `AutoBlueprint.Run`，其他控制台命令保留既有参数规则。下面的 C++ `Arguments` 数组仍直接传递字符串，不经过控制台解析。
 
 P0 命令继续保留：
 
@@ -95,15 +103,16 @@ Automation RunTests AutoBlueprint.P1
 Automation RunTests AutoBlueprint.P0
 ```
 
-也可使用 **Tools → Session Frontend → Automation**。新增源码：[AutoBlueprintP1Tests.cpp](../Source/AutoBlueprintEditor/Private/Tests/AutoBlueprintP1Tests.cpp)。
+也可使用 **Tools → Session Frontend → Automation**。宿主测试源码：[AutoBlueprintP1Tests.cpp](../Source/AutoBlueprintEditor/Private/Tests/AutoBlueprintP1Tests.cpp)；控制台参数测试与解析辅助函数同处 [AutoBlueprintEditorModule.cpp](../Source/AutoBlueprintEditor/Private/AutoBlueprintEditorModule.cpp)。
 
 | P1 测试 | 验证内容 |
 | --- | --- |
 | `InputValidation` | 路径边界、缺失脚本、参数数量/长度、模块标识符和 VM 无残留 |
 | `HostLifecycle` | 真实加载/反射、参数原样传递、模块缓存、跨任务隔离、异常/循环恢复、重入拒绝、VM 释放与原有游戏 Lua 状态 |
 | `FileEntryBoundary` | 文件入口明确报告未实现；参数不足及非工具模块被拒绝 |
+| `ConsoleArguments` | 从 UE 的空白拆分结果验证引号合并、中文、空参数、转义、空白规范化及错误时无部分结果 |
 
-P1 三项测试不创建或保存资产。P0 五项测试一起回归，其中 `SingleBuildResult` 创建并编译内存资产，不保存 `.uasset`。
+P1 四项测试不创建或保存资产。P0 五项测试一起回归，其中 `SingleBuildResult` 创建并编译内存资产，不保存 `.uasset`。
 
 手动检查：连续执行 hello → 错误探针 → hello；在 Play/Simulate 中运行工具应返回 `EDITOR_BUSY`，停止后可用；生成新名字的 P0 资产并完成保存/新会话重开；检查原有游戏 Lua 行为；正常关闭重开后命令可用且无 Lua/委托残留错误。
 
@@ -138,7 +147,7 @@ P0 保留 15 项结果检查并接入共享 SDK；P1 新增 14 项宿主/SDK 检
 | 描述文件、源码引用、换行和文档链接静态检查       | 已通过；不等价于 UHT/UE 编译                                 |
 | Lua 文件与 bootstrap 静态语法检查    | 已通过（luaparse 0.3.1，Lua 5.3 兼容语法）；不等价于 Lua 5.4 运行测试 |
 | UE 5.3.2 Win64 Editor 完整编译  | ✅                                                  |
-| 三项 `AutoBlueprint.P1` 测试    | ✅                                                  |
+| 四项 `AutoBlueprint.P1` 测试（含 `ConsoleArguments`） | ✅ 用户本地验证通过                                  |
 | 五项 `AutoBlueprint.P0` 兼容回归  | ✅                                                  |
 | 独立 Lua：P0 15 项、P1 14 项      | ✅                                                  |
 | 工具命令、PIE/SIE 拒绝、生成/保存/新会话重开 | ✅                                                  |
@@ -149,7 +158,13 @@ P0 保留 15 项结果检查并接入共享 SDK；P1 新增 14 项宿主/SDK 检
 - Help、hello → 错误探针 → hello、文件入口的 `NOT_IMPLEMENTED` 诊断符合预期；PIE 和 SIE 中均返回 `EDITOR_BUSY`，停止后工具恢复可用。
 - 新建并保存 `WBP_P1_CUA_20261111_1325`；完整关闭编辑器并重启后，资产可重开，`RootCanvas → TXT_Title / BTN_Confirm → TXT_Confirm` 控件树及文本完整。同名生成返回 `ASSET_ALREADY_EXISTS`。
 - 将原有 `BP_Test` 放入另存的验证关卡 `L_P1_CUA_20261111_1325`；重启前后均输出 `BP_Test BeginPlay from lua`。正常退出和新会话日志未发现 Lua/委托残留错误；游戏 Lua 行为的验收范围为该 BeginPlay 示例。
-- 带引号参数检查发现：`"hello world" "中文参数"` 实际输出为 `"hello | world" | "中文参数"`，未实现带空格参数的原样传递。用户决定不修复，以本页的 `_` 连接约定作为使用限制；上述通过状态不表示引号解析已修复，也不表示 `_` 示例已在本轮重新执行。
+- 初轮带引号参数检查发现：`"hello world" "中文参数"` 实际输出为 `"hello | world" | "中文参数"`。该问题已在后续引号合并修复中解决，临时强制使用 `_` 的约定已撤销；空白规范化限制保留，详见第 1 节。
 - 证据：`Saved/Logs/ProjectOne-backup-2026.11.11-05.27.09.log`（重启前）及 `Saved/Logs/ProjectOne.log`（重启后；后续编辑器会话可能轮换此文件）。验证 Widget、关卡及关联文件保留在本地。
+
+2026-11-11 控制台引号参数修复验证：
+
+- 修复限于 `RunScript` 接收参数后的解析与请求组装；沿用现有控制台注册、Lua 宿主、路径校验及执行限制。
+- UE 5.3.2 `ProjectOneEditor / Development Editor / Win64` 编译通过；无界面执行新增 `AutoBlueprint.P1.ConsoleArguments` 测试通过，退出码为 0，日志为 `Saved/Logs/P1-ConsoleArguments-Fix.log`。
+- 用户在编辑器中执行验收指令后确认通过：带空格/中文参数、带引号脚本路径、空参数、引号/反斜杠转义、连续空白规范化、非法引号拒绝、错误后 hello 恢复及四项 `AutoBlueprint.P1` 回归。
 
 按 [constitution 第 10 节](constitution.md#10-可维护性和变更交付)，完成后推送功能分支，由用户 review/validate，默认不创建 PR。
