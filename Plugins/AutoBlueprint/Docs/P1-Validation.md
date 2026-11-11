@@ -11,10 +11,12 @@
 ```text
 AutoBlueprint.Help
 AutoBlueprint.Run examples/hello.lua
-AutoBlueprint.Run examples/hello.lua "hello world" "中文参数"
+AutoBlueprint.Run examples/hello.lua hello_world 中文参数
 ```
 
 预期打印就绪信息或原样参数，以及 `AutoBlueprint Lua task completed`。这些命令不创建资产，无需点击 Play。
+
+控制台参数约定：每个参数不含空白，多词内容统一用 `_` 连接（例如 `hello_world`），不使用引号包裹参数。下划线按原样传入，不会自动还原为空格。当前控制台入口会拆分带空格的引号参数并保留引号；用户已接受该限制，不修改解析代码。此约定仅针对控制台文本入口，下面的 C++ `Arguments` 数组仍直接传递字符串。
 
 P0 命令继续保留：
 
@@ -131,15 +133,23 @@ P0 保留 15 项结果检查并接入共享 SDK；P1 新增 14 项宿主/SDK 检
 
 ## 7 本次验证记录
 
-| 检查 | 状态 |
-| --- | --- |
-| 描述文件、源码引用、换行和文档链接静态检查 | 已通过；不等价于 UHT/UE 编译 |
-| Lua 文件与 bootstrap 静态语法检查 | 已通过（luaparse 0.3.1，Lua 5.3 兼容语法）；不等价于 Lua 5.4 运行测试 |
-| UE 5.3.2 Win64 Editor 完整编译 | 待本地验证 |
-| 三项 `AutoBlueprint.P1` 测试 | 待本地验证 |
-| 五项 `AutoBlueprint.P0` 兼容回归 | 待本地验证 |
-| 独立 Lua：P0 15 项、P1 14 项 | 待执行 |
-| 工具命令、PIE/SIE 拒绝、生成/保存/新会话重开 | 待本地验证 |
-| 原有游戏 Lua 行为和关闭/重开 | 待本地验证 |
+| 检查                          | 状态                                                 |
+| --------------------------- | -------------------------------------------------- |
+| 描述文件、源码引用、换行和文档链接静态检查       | 已通过；不等价于 UHT/UE 编译                                 |
+| Lua 文件与 bootstrap 静态语法检查    | 已通过（luaparse 0.3.1，Lua 5.3 兼容语法）；不等价于 Lua 5.4 运行测试 |
+| UE 5.3.2 Win64 Editor 完整编译  | ✅                                                  |
+| 三项 `AutoBlueprint.P1` 测试    | ✅                                                  |
+| 五项 `AutoBlueprint.P0` 兼容回归  | ✅                                                  |
+| 独立 Lua：P0 15 项、P1 14 项      | ✅                                                  |
+| 工具命令、PIE/SIE 拒绝、生成/保存/新会话重开 | ✅                                                  |
+| 原有游戏 Lua 行为和关闭/重开           | ✅                                                  |
+
+2026-11-11 本地手动验证补充：
+
+- Help、hello → 错误探针 → hello、文件入口的 `NOT_IMPLEMENTED` 诊断符合预期；PIE 和 SIE 中均返回 `EDITOR_BUSY`，停止后工具恢复可用。
+- 新建并保存 `WBP_P1_CUA_20261111_1325`；完整关闭编辑器并重启后，资产可重开，`RootCanvas → TXT_Title / BTN_Confirm → TXT_Confirm` 控件树及文本完整。同名生成返回 `ASSET_ALREADY_EXISTS`。
+- 将原有 `BP_Test` 放入另存的验证关卡 `L_P1_CUA_20261111_1325`；重启前后均输出 `BP_Test BeginPlay from lua`。正常退出和新会话日志未发现 Lua/委托残留错误；游戏 Lua 行为的验收范围为该 BeginPlay 示例。
+- 带引号参数检查发现：`"hello world" "中文参数"` 实际输出为 `"hello | world" | "中文参数"`，未实现带空格参数的原样传递。用户决定不修复，以本页的 `_` 连接约定作为使用限制；上述通过状态不表示引号解析已修复，也不表示 `_` 示例已在本轮重新执行。
+- 证据：`Saved/Logs/ProjectOne-backup-2026.11.11-05.27.09.log`（重启前）及 `Saved/Logs/ProjectOne.log`（重启后；后续编辑器会话可能轮换此文件）。验证 Widget、关卡及关联文件保留在本地。
 
 按 [constitution 第 10 节](constitution.md#10-可维护性和变更交付)，完成后推送功能分支，由用户 review/validate，默认不创建 PR。

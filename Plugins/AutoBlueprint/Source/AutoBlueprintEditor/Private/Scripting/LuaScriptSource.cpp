@@ -49,6 +49,10 @@ namespace
 	}
 }
 
+/*
+ * check validation of RelativePath (e.g contains character, numbers and '_' only, ends with '.lua')
+ * combine Root & RelativePath together into a full script path which is OutPath
+ */
 bool AutoBlueprint::ResolveLuaScriptPath(const FString& Root, const FString& RelativePath,
 	FString& OutPath, FString& OutCode, FString& OutMessage)
 {

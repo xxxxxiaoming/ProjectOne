@@ -21,8 +21,8 @@ package.cpath = ""
 package.searchers = {}
 
 -- Do not reuse UnLua's already initialized package.loaded table or game loaders.
-local loaded = {}
-local loading = {}
+local loaded = {} -- P1-Validation.md/加载边界与生命周期:"工具模块缓存，不复用初始化时的 package.loaded"
+local loading = {} -- P1-Validation.md/加载边界与生命周期:"循环依赖报告 LUA_MODULE_CYCLE"
 local moduleCount = 0
 local function traceback(message)
     return debug.traceback(tostring(message), 2)
@@ -33,15 +33,15 @@ require = function(name)
     if loaded[name] then
         return loaded[name]
     end
-    assert(not loading[name], "LUA_MODULE_CYCLE: " .. name)
-    assert(moduleCount < 64, "LUA_MODULE_LIMIT: at most 64 tool modules may load per task")
+    assert(not loading[name], "LUA_MODULE_CYCLE: " .. name) -- P1-Validation.md/加载边界与生命周期:"循环依赖报告 LUA_MODULE_CYCLE"
+    assert(moduleCount < 64, "LUA_MODULE_LIMIT: at most 64 tool modules may load per task") -- P1-Validation.md/加载边界与生命周期:"每任务至多 64 次模块执行尝试，缓存命中不计。"
     local source, chunkName = readModule(name)
     assert(source, chunkName)
     local chunk, loadError = load(source, chunkName, "t")
     assert(chunk, loadError)
     loading[name] = true
     moduleCount = moduleCount + 1
-    local ok, value = xpcall(chunk, traceback, name)
+    local ok, value = xpcall(chunk, traceback, name) -- P1-Validation.md/加载边界与生命周期:"模块失败保留原始位置和调用栈"
     loading[name] = nil
     if not ok then
         error(value, 0)
@@ -49,7 +49,7 @@ require = function(name)
     if value == nil then
         value = true
     end
-    loaded[name] = value
+    loaded[name] = value -- P1-Validation.md/加载边界与生命周期:"工具模块缓存，不复用初始化时的 package.loaded"
     return value
 end
 
@@ -169,6 +169,7 @@ FAutoBlueprintLuaRunResult FAutoBlueprintEditorLuaRunner::Run(const FAutoBluepri
 	{
 		return Result;
 	}
+	// At this point Result.ScriptPath is the full path of the Lua script 
 
 	// No Start/SetActive/GetEnv: construction initializes reflection, destruction releases this VM.
 	UnLua::FLuaEnv Environment;
@@ -183,7 +184,7 @@ FAutoBlueprintLuaRunResult FAutoBlueprintEditorLuaRunner::Run(const FAutoBluepri
 	const int32 StackBase = lua_gettop(State);
 	lua_createtable(State, 0, 4);
 	SetStringField(State, "source", Source);
-	SetStringField(State, "chunkName", TEXT("@") + Result.ScriptPath);
+	SetStringField(State, "chunkName", TEXT("@") + Result.ScriptPath); // chunkName identifies the script file that Source comes from.
 	lua_createtable(State, Request.Arguments.Num(), 0);
 	for (int32 Index = 0; Index < Request.Arguments.Num(); ++Index)
 	{
@@ -194,7 +195,7 @@ FAutoBlueprintLuaRunResult FAutoBlueprintEditorLuaRunner::Run(const FAutoBluepri
 	// The closure owns a Lua string, not a pointer to a C++ local or subsystem.
 	PushString(State, ScriptRoot);
 	lua_pushcclosure(State, &ReadToolModule, 1);
-	lua_setfield(State, -2, "readModule");
+	lua_setfield(State, -2, "readModule"); // this is for require function
 	lua_setglobal(State, "AutoBlueprintTask");
 
 	if (!Environment.DoString(TaskBootstrap, TEXT("@AutoBlueprint/ToolRunner")))
