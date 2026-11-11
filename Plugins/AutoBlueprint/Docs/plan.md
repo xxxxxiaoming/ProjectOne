@@ -2,7 +2,7 @@
 
 采用 Lua + UnLua + C++ Editor 模块，在 ProjectOne 内开发 AutoBlueprint 插件。首个里程碑是在不启动 Play 的普通编辑状态下，通过 Lua 调用 C++ 创建 Widget Blueprint，编译保存后在新编辑器会话中重新打开。此后逐步补齐资源、布局、控件和交付验证。
 
-版本：0.4 草案；日期：2026-11-06。目标环境：UE 5.3.2、UnLua 2.3.6、Win64 Editor。当前状态：P0 及结果重构已由用户本地验证通过；P1 代码实现完成、待本地 review/validate；P2 至 P7 待开发。
+版本：0.4 草案；日期：2026-11-06。目标环境：UE 5.3.2、UnLua 2.3.6、Win64 Editor。当前状态：P0 及结果重构已由用户本地验证通过；P1（含引号参数修复）已本地验证；P2 代码实现完成、待本地 review/validate；P3 至 P7 待开发。
 
 依据：[架构设计草案](Architecture.md)、[编码规范 Constitution](constitution.md)。仓库源文件位于 `Plugins/AutoBlueprint/Docs/plan.md`，与架构设计和编码规范放在同一目录。
 
@@ -58,7 +58,7 @@ flowchart TD
 
 ## P1 完善插件与编辑器 Lua 入口
 
-实现状态：代码已完成，待用户本地 review/validate。提供 `AutoBlueprint.Run`、`AutoBlueprint.GenerateFromFile`、`AutoBlueprint.Help` 命令，保留 P0 命令；经静态反射门面和子系统执行同步任务。宿主采用独立 VM、受控模块加载、每任务缓存、异常调用栈及重入保护。交付步骤见 [P1 代码与本地验证](P1-Validation.md)。
+实现状态：已由用户本地验证通过（含控制台引号参数修复），详见 P1-Validation.md。提供 `AutoBlueprint.Run`、`AutoBlueprint.GenerateFromFile`、`AutoBlueprint.Help` 命令，保留 P0 命令；经静态反射门面和子系统执行同步任务。宿主采用独立 VM、受控模块加载、每任务缓存、异常调用栈及重入保护。交付步骤见 [P1 代码与本地验证](P1-Validation.md)。
 
 `generate_from_file.lua` 和共享 Lua API 已接通；P1 明确返回 `NOT_IMPLEMENTED`，不读取布局或生成替代 UI。JSON 协议、只读预检和通用生成仍由 P2/P3 实现。
 
@@ -75,6 +75,8 @@ flowchart TD
 通过条件：开启项目即可使用工具入口；无需 Play；脚本异常有位置/调用栈；任务结束后环境和引用释放；既有游戏 Lua 的启动及状态未被工具流程改变。
 
 ## P2 实现协议 校验与控件扩展入口
+
+实现状态：协议、注册表、类型化布局和只读校验已实现；离线 Schema/Lua 检查通过，UE 编译与本地验收待完成。入口为 ValidateLayout、ValidateLayoutFile；详见 [P2 验证说明](P2-Validation.md)。通用生成与批量执行未实现。
 
 开发任务：
 
@@ -185,7 +187,7 @@ flowchart TD
 - [ ] 运行时实例化与相关 cook/打包验证完成。
 - [ ] 文档列出实际完成的检查、未验证项和已知限制。
 
-每次交付包含变更内容、原因、相关文件、检查结果及待验证项。默认遵循 constitution 第 10 节：推送 `feature_auto_blueprint_plugin` 后等待用户 fetch、review 和 validate，默认不创建 PR。P1 待本地验收，后续阶段按用户指令推进。
+每次交付包含变更内容、原因、相关文件、检查结果及待验证项。默认遵循 constitution 第 10 节：推送 `feature_auto_blueprint_plugin` 后等待用户 fetch、review 和 validate，默认不创建 PR。P1 已本地验收；P2 待本地验收，后续阶段按用户指令推进。
 
 ## 修订记录
 

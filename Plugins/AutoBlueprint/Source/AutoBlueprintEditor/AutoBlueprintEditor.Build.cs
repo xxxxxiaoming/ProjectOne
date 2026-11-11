@@ -13,10 +13,10 @@ public class AutoBlueprintEditor : ModuleRules
 		});
 
 		// Lua hosting, script discovery and asset writes remain editor implementation details.
-		// P1 uses console commands; no ToolMenus or JSON dependency is needed yet.
+		// JSON validation and image inspection are read-only P2 implementation details.
 		PrivateDependencyModuleNames.AddRange(new[]
 		{
-			"AssetRegistry", "Kismet", "KismetCompiler", "Lua", "Projects",
+			"Json", "ImageWrapper", "AssetRegistry", "Kismet", "KismetCompiler", "Lua", "Projects",
 			"Slate", "SlateCore", "UMG", "UMGEditor", "UnLua", "UnrealEd"
 		});
 	}

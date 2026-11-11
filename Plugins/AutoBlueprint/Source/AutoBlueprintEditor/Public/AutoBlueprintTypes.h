@@ -36,6 +36,22 @@ struct AUTOBLUEPRINTEDITOR_API FAutoBlueprintDiagnostic
 	FString Message;
 };
 
+/** Read-only layout preflight; success does not create or reserve any asset. */
+USTRUCT(BlueprintType)
+struct AUTOBLUEPRINTEDITOR_API FAutoBlueprintValidationResult
+{
+	GENERATED_BODY()
+	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
+	bool bValid = false;
+	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
+	FString PlannedAssetPath;
+	/** Long package names planned for image import; no import has occurred. */
+	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
+	TArray<FString> PlannedImports;
+	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
+	TArray<FAutoBlueprintDiagnostic> Diagnostics;
+};
+
 /** Fixed P0 fixture inputs. General layout parsing is introduced in P2/P3. */
 USTRUCT(BlueprintType)
 struct AUTOBLUEPRINTEDITOR_API FAutoBlueprintSmokeTestRequest

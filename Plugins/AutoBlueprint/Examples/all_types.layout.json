@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "asset": {
+    "package_path": "/Game/UI/AutoBlueprintTests/WBP_P2_Example"
+  },
+  "design": {
+    "width": 1080,
+    "height": 1920
+  },
+  "root": {
+    "name": "RootCanvas",
+    "type": "CanvasPanel",
+    "is_variable": false,
+    "children": [
+      {
+        "name": "W_CanvasPanel",
+        "type": "CanvasPanel",
+        "is_variable": false,
+        "slot": {
+          "type": "Canvas"
+        }
+      },
+      {
+        "name": "W_Overlay",
+        "type": "Overlay",
+        "is_variable": false,
+        "slot": {
+          "type": "Canvas"
+        }
+      },
+      {
+        "name": "W_HorizontalBox",
+        "type": "HorizontalBox",
+        "is_variable": false,
+        "slot": {
+          "type": "Canvas"
+        }
+      },
+      {
+        "name": "W_VerticalBox",
+        "type": "VerticalBox",
+        "is_variable": false,
+        "slot": {
+          "type": "Canvas"
+        }
+      },
+      {
+        "name": "W_Border",
+        "type": "Border",
+        "is_variable": false,
+        "slot": {
+          "type": "Canvas"
+        }
+      },
+      {
+        "name": "W_SizeBox",
+        "type": "SizeBox",
+        "is_variable": false,
+        "slot": {
+          "type": "Canvas"
+        }
+      },
+      {
+        "name": "W_ScaleBox",
+        "type": "ScaleBox",
+        "is_variable": false,
+        "slot": {
+          "type": "Canvas"
+        }
+      },
+      {
+        "name": "W_Button",
+        "type": "Button",
+        "is_variable": false,
+        "slot": {
+          "type": "Canvas"
+        }
+      },
+      {
+        "name": "W_Image",
+        "type": "Image",
+        "is_variable": false,
+        "slot": {
+          "type": "Canvas"
+        }
+      },
+      {
+        "name": "W_TextBlock",
+        "type": "TextBlock",
+        "is_variable": false,
+        "slot": {
+          "type": "Canvas"
+        }
+      },
+      {
+        "name": "W_Spacer",
+        "type": "Spacer",
+        "is_variable": false,
+        "slot": {
+          "type": "Canvas"
+        }
+      }
+    ]
+  }
+}

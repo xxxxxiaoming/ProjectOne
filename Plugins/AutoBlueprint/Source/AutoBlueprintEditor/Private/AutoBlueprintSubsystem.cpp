@@ -1,4 +1,5 @@
 #include "AutoBlueprintSubsystem.h"
+#include "Layout/LayoutValidation.h"
 
 #include "Assets/WidgetBlueprintWriter.h"
 #include "AssetRegistry/AssetRegistryModule.h"
@@ -184,4 +185,38 @@ FAutoBlueprintLuaRunResult UAutoBlueprintSubsystem::RunEditorScript(const FAutoB
 	TGuardValue<bool> ScriptGuard(bScriptInProgress, true);
 	FAutoBlueprintEditorLuaRunner Runner;
 	return Runner.Run(Request);
+}
+
+FAutoBlueprintValidationResult UAutoBlueprintSubsystem::ValidateLayout(const FString& LayoutJson)
+{
+	FAutoBlueprintValidationResult Result;
+	FAutoBlueprintDiagnostic Diagnostic;
+	if (!AutoBlueprint::CheckEditorContext(Diagnostic.Code, Diagnostic.Message))
+	{
+		Result.Diagnostics.Add(MoveTemp(Diagnostic));
+		return Result;
+	}
+	if (!bAcceptScriptRequests || bBuildInProgress)
+	{
+		Diagnostic.Code = TEXT("EDITOR_BUSY");
+		Diagnostic.Message = TEXT("Validation requires an initialized, idle editor subsystem.");
+		Result.Diagnostics.Add(MoveTemp(Diagnostic));
+		return Result;
+	}
+	AutoBlueprint::FLayoutSpec Layout;
+	return AutoBlueprint::ValidateLayoutJson(LayoutJson, Layout);
+}
+
+FAutoBlueprintValidationResult UAutoBlueprintSubsystem::ValidateLayoutFile(const FString& ProjectRelativePath)
+{
+	FAutoBlueprintValidationResult Result;
+	FAutoBlueprintDiagnostic Diagnostic;
+	if (!AutoBlueprint::CheckEditorContext(Diagnostic.Code, Diagnostic.Message))
+	{
+		Result.Diagnostics.Add(MoveTemp(Diagnostic));
+		return Result;
+	}
+	FString Json;
+	if (!AutoBlueprint::ReadLayoutFile(ProjectRelativePath, Json, Result)) { return Result; }
+	return ValidateLayout(Json);
 }

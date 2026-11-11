@@ -53,10 +53,20 @@ function module.buildSmokeTest(request)
     return module.reportBuildResult(result, request.bSave)
 end
 
+function module.validateLayout(layoutJson)
+    assert(type(layoutJson) == "string", "INVALID_ARGUMENTS: expected layout JSON")
+    return UE.UAutoBlueprintLibrary.ValidateLayout(layoutJson)
+end
+
+function module.validateLayoutFile(layoutPath)
+    assert(type(layoutPath) == "string" and layoutPath ~= "", "INVALID_ARGUMENTS: expected layout path")
+    return UE.UAutoBlueprintLibrary.ValidateLayoutFile(layoutPath)
+end
+
 function module.generateFromFile(layoutPath)
     assert(type(layoutPath) == "string" and layoutPath ~= "",
         "INVALID_ARGUMENTS: expected a project-relative layout file path")
-    -- TODO P2/P3: connect the C++ file-validation/build facade once the layout protocol exists.
+    -- P2 provides read-only validation; actual layout construction belongs to P3.
     -- Never substitute the fixed P0 tree for a requested layout.
     error("NOT_IMPLEMENTED: layout-file generation requires P2/P3. No layout was read and no asset was created.", 2)
 end

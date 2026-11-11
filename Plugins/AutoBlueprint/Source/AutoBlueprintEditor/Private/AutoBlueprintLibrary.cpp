@@ -64,3 +64,27 @@ FAutoBlueprintLuaRunResult UAutoBlueprintLibrary::RunEditorScript(const FAutoBlu
 	Result.Message = MoveTemp(Diagnostic.Message);
 	return Result;
 }
+
+FAutoBlueprintValidationResult UAutoBlueprintLibrary::ValidateLayout(const FString& LayoutJson)
+{
+	FAutoBlueprintDiagnostic Diagnostic;
+	if (UAutoBlueprintSubsystem* Subsystem = GetAvailableSubsystem(Diagnostic))
+	{
+		return Subsystem->ValidateLayout(LayoutJson);
+	}
+	FAutoBlueprintValidationResult Result;
+	Result.Diagnostics.Add(MoveTemp(Diagnostic));
+	return Result;
+}
+
+FAutoBlueprintValidationResult UAutoBlueprintLibrary::ValidateLayoutFile(const FString& ProjectRelativePath)
+{
+	FAutoBlueprintDiagnostic Diagnostic;
+	if (UAutoBlueprintSubsystem* Subsystem = GetAvailableSubsystem(Diagnostic))
+	{
+		return Subsystem->ValidateLayoutFile(ProjectRelativePath);
+	}
+	FAutoBlueprintValidationResult Result;
+	Result.Diagnostics.Add(MoveTemp(Diagnostic));
+	return Result;
+}

@@ -1,6 +1,6 @@
 # AutoBlueprint 项目插件架构设计草案
 
-本方案用于在 ProjectOne 项目内实现 AutoBlueprint 编辑器插件：通过 Lua + UnLua 调用 C++ 编辑器核心，把经过审阅的 JSON 布局配置转换为标准 User Widget Blueprint `.uasset`，在 UMG Designer 中打开即可查看和编辑控件树。目标版本为 UE 5.3.2、UnLua 2.3.6，首版以 Win64 Editor 为验证基线。版本为 0.4 草案，更新日期 2026-11-06；通用布局接口仍为拟定设计，P0 结果契约已验证，P1 工具宿主已实现待本地验证，入口分别见 P0-Validation.md 与 P1-Validation.md。
+本方案用于在 ProjectOne 项目内实现 AutoBlueprint 编辑器插件：通过 Lua + UnLua 调用 C++ 编辑器核心，把经过审阅的 JSON 布局配置转换为标准 User Widget Blueprint `.uasset`，在 UMG Designer 中打开即可查看和编辑控件树。目标版本为 UE 5.3.2、UnLua 2.3.6，首版以 Win64 Editor 为验证基线。版本为 0.4 草案，更新日期 2026-11-06；通用布局接口仍为拟定设计，P0 结果契约已验证，P1 工具宿主及引号参数修复已本地验证，P2 只读校验已实现待本地验证，入口分别见 P0-Validation.md 与 P1-Validation.md。
 
 ## 1 范围与待确认项
 
@@ -14,7 +14,7 @@
 | 插件位置 | `ProjectOne/Plugins/AutoBlueprint/` |
 | 资产位置 | 项目 `/Game/UI/...`，对应 `ProjectOne/Content/UI/...` |
 | 重复生成 | 首版 CreateOnly；覆盖重建和保留人工修改的更新作为后续独立能力 |
-| 当前实现 | P0 固定输入生成源码已准备，UE 编译和运行待验证；详见 [P0 验证说明](P0-Validation.md) |
+| 当前实现 | P0/P1 已本地验证；P2 协议与只读校验已实现待 UE 验证，详见 [P2 验证说明](P2-Validation.md) |
 
 这里的“直接可用”指蓝图能够成功编译、保存、重新打开、实例化并通过 `AddToViewport` 显示。原生按钮可呈现常规交互样式，点击之后的游戏业务行为由后续逻辑实现。
 
@@ -311,6 +311,8 @@ Canvas 的 `offsets` 对应 `[Left, Top, Right, Bottom]`。某一轴锚点相同
 
 ## 8 C++ 与 Lua 接口框架
 
+P2 已提供静态门面 `ValidateLayout(LayoutJson)`、`ValidateLayoutFile(ProjectRelativePath)`，返回 `FAutoBlueprintValidationResult`。Schema 和默认值位于 `Resources/Schemas/layout.schema.json`；类型能力登记在 `WidgetTypeRegistry`，内部类型化数据在 `LayoutSpec.h`。C++ 在结构校验后检查名称、Slot、目标冲突和真实资源，整个入口不创建、导入或保存资产。以下通用构建接口仍是 P3 设计，P2 的准确字段、范围、默认值和验证状态见 [P2-Validation.md](P2-Validation.md)。
+
 P1 已实现 `UAutoBlueprintLibrary::RunEditorScript(const FAutoBlueprintLuaRunRequest&)`，转调编辑器子系统。请求携带插件工具目录下的相对 `ScriptPath` 和字符串 `Arguments`；结果 `FAutoBlueprintLuaRunResult` 提供脚本完成状态、错误码、原始错误/调用栈及已解析路径，与资产构建结果独立。
 
 P1 采用 Output Log 命令入口（`AutoBlueprint.Run`、`AutoBlueprint.GenerateFromFile`、`AutoBlueprint.Help`），无需额外菜单依赖。所有公开命令经过门面与子系统；子系统拒绝嵌套脚本及构建期间的脚本重入。每次任务的 `FLuaEnv` 位于调用栈上，返回前释放；模块注销全部命令，不保留跨任务 VM 或回调。
@@ -493,4 +495,4 @@ print("Generated: " .. result.TargetAssetPath)
 
 现有收银 UI 的 `ASSET_MAP.md`、`UMG_LAYOUT.md` 与交互稿作为布局和命名依据。其中整板 JPG 应作为参考，不能用一张整板图片代替可编辑控件树；缺少独立切图的区域需要补图，或在确认后用原生控件组合表达。
 
-版本 0.4 草案以 Lua + UnLua + C++ 编辑器核心为实施基线。首版使用 CreateOnly，业务事件绑定、覆盖重建及增量更新留作后续能力。P0 及结果重构已由用户验证；P1 代码已交付待本地验证，记录见 `P0-Validation.md` 与 `P1-Validation.md`。
+版本 0.4 草案以 Lua + UnLua + C++ 编辑器核心为实施基线。首版使用 CreateOnly，业务事件绑定、覆盖重建及增量更新留作后续能力。P0 及结果重构已由用户验证；P1 已本地验证，P2 代码已交付待本地验证，记录见 `P0-Validation.md`、`P1-Validation.md` 与 `P2-Validation.md`。

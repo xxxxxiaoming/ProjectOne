@@ -1,0 +1,1582 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://autoblueprint.local/layout.schema.json",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "enum": [
+        1
+      ]
+    },
+    "asset": {
+      "type": "object",
+      "properties": {
+        "package_path": {
+          "type": "string",
+          "maxLength": 4096
+        }
+      },
+      "required": [
+        "package_path"
+      ],
+      "additionalProperties": false
+    },
+    "design": {
+      "type": "object",
+      "properties": {
+        "width": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 16384
+        },
+        "height": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 16384
+        }
+      },
+      "required": [
+        "width",
+        "height"
+      ],
+      "additionalProperties": false
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "object_path": {
+                "type": "string",
+                "maxLength": 4096
+              }
+            },
+            "required": [
+              "object_path"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "source_file": {
+                "type": "string",
+                "maxLength": 4096
+              },
+              "package_path": {
+                "type": "string",
+                "maxLength": 4096
+              }
+            },
+            "required": [
+              "source_file",
+              "package_path"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "maxProperties": 256,
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64,
+        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+      },
+      "default": {}
+    },
+    "root": {
+      "$ref": "#/$defs/node"
+    }
+  },
+  "required": [
+    "schema_version",
+    "asset",
+    "design",
+    "root"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "brush": {
+      "type": "object",
+      "properties": {
+        "resource": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "draw_as": {
+          "type": "string",
+          "enum": [
+            "Image",
+            "Box"
+          ],
+          "default": "Image"
+        },
+        "margin": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "minItems": 4,
+          "maxItems": 4,
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "tint": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "minItems": 4,
+          "maxItems": 4,
+          "default": [
+            1,
+            1,
+            1,
+            1
+          ]
+        }
+      },
+      "required": [
+        "resource"
+      ],
+      "additionalProperties": false
+    },
+    "slot": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/slotCanvas"
+        },
+        {
+          "$ref": "#/$defs/slotOverlay"
+        },
+        {
+          "$ref": "#/$defs/slotHorizontalBox"
+        },
+        {
+          "$ref": "#/$defs/slotVerticalBox"
+        },
+        {
+          "$ref": "#/$defs/slotBorder"
+        },
+        {
+          "$ref": "#/$defs/slotSizeBox"
+        },
+        {
+          "$ref": "#/$defs/slotScaleBox"
+        },
+        {
+          "$ref": "#/$defs/slotButton"
+        }
+      ]
+    },
+    "slotCanvas": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "Canvas"
+          ]
+        },
+        "anchors": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "max": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+          "required": [
+            "min",
+            "max"
+          ],
+          "additionalProperties": false,
+          "default": {
+            "min": [
+              0,
+              0
+            ],
+            "max": [
+              0,
+              0
+            ]
+          }
+        },
+        "alignment": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "minItems": 2,
+          "maxItems": 2,
+          "default": [
+            0,
+            0
+          ]
+        },
+        "offsets": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": -1000000,
+            "maximum": 1000000
+          },
+          "minItems": 4,
+          "maxItems": 4,
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "auto_size": {
+          "type": "boolean",
+          "default": false
+        },
+        "z_order": {
+          "type": "integer",
+          "minimum": -2147483648,
+          "maximum": 2147483647,
+          "default": 0
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "slotOverlay": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "Overlay"
+          ]
+        },
+        "padding": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "minItems": 4,
+          "maxItems": 4,
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "horizontal_alignment": {
+          "type": "string",
+          "enum": [
+            "Fill",
+            "Left",
+            "Center",
+            "Right"
+          ],
+          "default": "Fill"
+        },
+        "vertical_alignment": {
+          "type": "string",
+          "enum": [
+            "Fill",
+            "Top",
+            "Center",
+            "Bottom"
+          ],
+          "default": "Fill"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "slotHorizontalBox": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "HorizontalBox"
+          ]
+        },
+        "padding": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "minItems": 4,
+          "maxItems": 4,
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "horizontal_alignment": {
+          "type": "string",
+          "enum": [
+            "Fill",
+            "Left",
+            "Center",
+            "Right"
+          ],
+          "default": "Fill"
+        },
+        "vertical_alignment": {
+          "type": "string",
+          "enum": [
+            "Fill",
+            "Top",
+            "Center",
+            "Bottom"
+          ],
+          "default": "Fill"
+        },
+        "size_rule": {
+          "type": "string",
+          "enum": [
+            "Auto",
+            "Fill"
+          ],
+          "default": "Auto"
+        },
+        "fill": {
+          "type": "number",
+          "minimum": 0.001,
+          "maximum": 1000,
+          "default": 1
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "slotVerticalBox": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "VerticalBox"
+          ]
+        },
+        "padding": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "minItems": 4,
+          "maxItems": 4,
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "horizontal_alignment": {
+          "type": "string",
+          "enum": [
+            "Fill",
+            "Left",
+            "Center",
+            "Right"
+          ],
+          "default": "Fill"
+        },
+        "vertical_alignment": {
+          "type": "string",
+          "enum": [
+            "Fill",
+            "Top",
+            "Center",
+            "Bottom"
+          ],
+          "default": "Fill"
+        },
+        "size_rule": {
+          "type": "string",
+          "enum": [
+            "Auto",
+            "Fill"
+          ],
+          "default": "Auto"
+        },
+        "fill": {
+          "type": "number",
+          "minimum": 0.001,
+          "maximum": 1000,
+          "default": 1
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "slotBorder": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "Border"
+          ]
+        },
+        "padding": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "minItems": 4,
+          "maxItems": 4,
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "horizontal_alignment": {
+          "type": "string",
+          "enum": [
+            "Fill",
+            "Left",
+            "Center",
+            "Right"
+          ],
+          "default": "Fill"
+        },
+        "vertical_alignment": {
+          "type": "string",
+          "enum": [
+            "Fill",
+            "Top",
+            "Center",
+            "Bottom"
+          ],
+          "default": "Fill"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "slotSizeBox": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "SizeBox"
+          ]
+        },
+        "padding": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "minItems": 4,
+          "maxItems": 4,
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "horizontal_alignment": {
+          "type": "string",
+          "enum": [
+            "Fill",
+            "Left",
+            "Center",
+            "Right"
+          ],
+          "default": "Fill"
+        },
+        "vertical_alignment": {
+          "type": "string",
+          "enum": [
+            "Fill",
+            "Top",
+            "Center",
+            "Bottom"
+          ],
+          "default": "Fill"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "slotScaleBox": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "ScaleBox"
+          ]
+        },
+        "padding": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "minItems": 4,
+          "maxItems": 4,
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "horizontal_alignment": {
+          "type": "string",
+          "enum": [
+            "Fill",
+            "Left",
+            "Center",
+            "Right"
+          ],
+          "default": "Fill"
+        },
+        "vertical_alignment": {
+          "type": "string",
+          "enum": [
+            "Fill",
+            "Top",
+            "Center",
+            "Bottom"
+          ],
+          "default": "Fill"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "slotButton": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "Button"
+          ]
+        },
+        "padding": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "minItems": 4,
+          "maxItems": 4,
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "horizontal_alignment": {
+          "type": "string",
+          "enum": [
+            "Fill",
+            "Left",
+            "Center",
+            "Right"
+          ],
+          "default": "Fill"
+        },
+        "vertical_alignment": {
+          "type": "string",
+          "enum": [
+            "Fill",
+            "Top",
+            "Center",
+            "Bottom"
+          ],
+          "default": "Fill"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "nodeCanvasPanel": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "CanvasPanel"
+          ]
+        },
+        "is_variable": {
+          "type": "boolean"
+        },
+        "properties": {
+          "type": "object",
+          "properties": {
+            "visibility": {
+              "type": "string",
+              "enum": [
+                "Visible",
+                "Collapsed",
+                "Hidden",
+                "HitTestInvisible",
+                "SelfHitTestInvisible"
+              ],
+              "default": "Visible"
+            },
+            "is_enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "render_opacity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 1
+            },
+            "default": {}
+          },
+          "required": [],
+          "additionalProperties": false,
+          "default": {}
+        },
+        "slot": {
+          "$ref": "#/$defs/slot"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          },
+          "maxItems": 1024,
+          "default": []
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "is_variable"
+      ],
+      "additionalProperties": false
+    },
+    "nodeOverlay": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "Overlay"
+          ]
+        },
+        "is_variable": {
+          "type": "boolean"
+        },
+        "properties": {
+          "type": "object",
+          "properties": {
+            "visibility": {
+              "type": "string",
+              "enum": [
+                "Visible",
+                "Collapsed",
+                "Hidden",
+                "HitTestInvisible",
+                "SelfHitTestInvisible"
+              ],
+              "default": "Visible"
+            },
+            "is_enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "render_opacity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 1
+            },
+            "default": {}
+          },
+          "required": [],
+          "additionalProperties": false,
+          "default": {}
+        },
+        "slot": {
+          "$ref": "#/$defs/slot"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          },
+          "maxItems": 1024,
+          "default": []
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "is_variable"
+      ],
+      "additionalProperties": false
+    },
+    "nodeHorizontalBox": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "HorizontalBox"
+          ]
+        },
+        "is_variable": {
+          "type": "boolean"
+        },
+        "properties": {
+          "type": "object",
+          "properties": {
+            "visibility": {
+              "type": "string",
+              "enum": [
+                "Visible",
+                "Collapsed",
+                "Hidden",
+                "HitTestInvisible",
+                "SelfHitTestInvisible"
+              ],
+              "default": "Visible"
+            },
+            "is_enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "render_opacity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 1
+            },
+            "default": {}
+          },
+          "required": [],
+          "additionalProperties": false,
+          "default": {}
+        },
+        "slot": {
+          "$ref": "#/$defs/slot"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          },
+          "maxItems": 1024,
+          "default": []
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "is_variable"
+      ],
+      "additionalProperties": false
+    },
+    "nodeVerticalBox": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "VerticalBox"
+          ]
+        },
+        "is_variable": {
+          "type": "boolean"
+        },
+        "properties": {
+          "type": "object",
+          "properties": {
+            "visibility": {
+              "type": "string",
+              "enum": [
+                "Visible",
+                "Collapsed",
+                "Hidden",
+                "HitTestInvisible",
+                "SelfHitTestInvisible"
+              ],
+              "default": "Visible"
+            },
+            "is_enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "render_opacity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 1
+            },
+            "default": {}
+          },
+          "required": [],
+          "additionalProperties": false,
+          "default": {}
+        },
+        "slot": {
+          "$ref": "#/$defs/slot"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          },
+          "maxItems": 1024,
+          "default": []
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "is_variable"
+      ],
+      "additionalProperties": false
+    },
+    "nodeBorder": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "Border"
+          ]
+        },
+        "is_variable": {
+          "type": "boolean"
+        },
+        "properties": {
+          "type": "object",
+          "properties": {
+            "visibility": {
+              "type": "string",
+              "enum": [
+                "Visible",
+                "Collapsed",
+                "Hidden",
+                "HitTestInvisible",
+                "SelfHitTestInvisible"
+              ],
+              "default": "Visible"
+            },
+            "is_enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "render_opacity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 1
+            },
+            "brush": {
+              "$ref": "#/$defs/brush"
+            },
+            "content_color": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "minItems": 4,
+              "maxItems": 4,
+              "default": [
+                1,
+                1,
+                1,
+                1
+              ]
+            },
+            "default": {}
+          },
+          "required": [],
+          "additionalProperties": false,
+          "default": {}
+        },
+        "slot": {
+          "$ref": "#/$defs/slot"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          },
+          "maxItems": 1,
+          "default": []
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "is_variable"
+      ],
+      "additionalProperties": false
+    },
+    "nodeSizeBox": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "SizeBox"
+          ]
+        },
+        "is_variable": {
+          "type": "boolean"
+        },
+        "properties": {
+          "type": "object",
+          "properties": {
+            "visibility": {
+              "type": "string",
+              "enum": [
+                "Visible",
+                "Collapsed",
+                "Hidden",
+                "HitTestInvisible",
+                "SelfHitTestInvisible"
+              ],
+              "default": "Visible"
+            },
+            "is_enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "render_opacity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 1
+            },
+            "width_override": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 16384
+            },
+            "height_override": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 16384
+            },
+            "default": {}
+          },
+          "required": [],
+          "additionalProperties": false,
+          "default": {}
+        },
+        "slot": {
+          "$ref": "#/$defs/slot"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          },
+          "maxItems": 1,
+          "default": []
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "is_variable"
+      ],
+      "additionalProperties": false
+    },
+    "nodeScaleBox": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "ScaleBox"
+          ]
+        },
+        "is_variable": {
+          "type": "boolean"
+        },
+        "properties": {
+          "type": "object",
+          "properties": {
+            "visibility": {
+              "type": "string",
+              "enum": [
+                "Visible",
+                "Collapsed",
+                "Hidden",
+                "HitTestInvisible",
+                "SelfHitTestInvisible"
+              ],
+              "default": "Visible"
+            },
+            "is_enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "render_opacity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 1
+            },
+            "stretch": {
+              "type": "string",
+              "enum": [
+                "None",
+                "Fill",
+                "ScaleToFit",
+                "ScaleToFitX",
+                "ScaleToFitY",
+                "ScaleToFill",
+                "UserSpecified"
+              ],
+              "default": "ScaleToFit"
+            },
+            "stretch_direction": {
+              "type": "string",
+              "enum": [
+                "Both",
+                "DownOnly",
+                "UpOnly"
+              ],
+              "default": "Both"
+            },
+            "user_specified_scale": {
+              "type": "number",
+              "minimum": 0.001,
+              "maximum": 1000,
+              "default": 1
+            },
+            "default": {}
+          },
+          "required": [],
+          "additionalProperties": false,
+          "default": {}
+        },
+        "slot": {
+          "$ref": "#/$defs/slot"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          },
+          "maxItems": 1,
+          "default": []
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "is_variable"
+      ],
+      "additionalProperties": false
+    },
+    "nodeButton": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "Button"
+          ]
+        },
+        "is_variable": {
+          "type": "boolean"
+        },
+        "properties": {
+          "type": "object",
+          "properties": {
+            "visibility": {
+              "type": "string",
+              "enum": [
+                "Visible",
+                "Collapsed",
+                "Hidden",
+                "HitTestInvisible",
+                "SelfHitTestInvisible"
+              ],
+              "default": "Visible"
+            },
+            "is_enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "render_opacity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 1
+            },
+            "is_focusable": {
+              "type": "boolean",
+              "default": true
+            },
+            "style": {
+              "type": "object",
+              "properties": {
+                "normal": {
+                  "$ref": "#/$defs/brush"
+                },
+                "hovered": {
+                  "$ref": "#/$defs/brush"
+                },
+                "pressed": {
+                  "$ref": "#/$defs/brush"
+                },
+                "disabled": {
+                  "$ref": "#/$defs/brush"
+                }
+              },
+              "required": [],
+              "additionalProperties": false
+            },
+            "default": {}
+          },
+          "required": [],
+          "additionalProperties": false,
+          "default": {}
+        },
+        "slot": {
+          "$ref": "#/$defs/slot"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          },
+          "maxItems": 1,
+          "default": []
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "is_variable"
+      ],
+      "additionalProperties": false
+    },
+    "nodeImage": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "Image"
+          ]
+        },
+        "is_variable": {
+          "type": "boolean"
+        },
+        "properties": {
+          "type": "object",
+          "properties": {
+            "visibility": {
+              "type": "string",
+              "enum": [
+                "Visible",
+                "Collapsed",
+                "Hidden",
+                "HitTestInvisible",
+                "SelfHitTestInvisible"
+              ],
+              "default": "Visible"
+            },
+            "is_enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "render_opacity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 1
+            },
+            "brush": {
+              "$ref": "#/$defs/brush"
+            },
+            "default": {}
+          },
+          "required": [],
+          "additionalProperties": false,
+          "default": {}
+        },
+        "slot": {
+          "$ref": "#/$defs/slot"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          },
+          "maxItems": 0,
+          "default": []
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "is_variable"
+      ],
+      "additionalProperties": false
+    },
+    "nodeTextBlock": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "TextBlock"
+          ]
+        },
+        "is_variable": {
+          "type": "boolean"
+        },
+        "properties": {
+          "type": "object",
+          "properties": {
+            "visibility": {
+              "type": "string",
+              "enum": [
+                "Visible",
+                "Collapsed",
+                "Hidden",
+                "HitTestInvisible",
+                "SelfHitTestInvisible"
+              ],
+              "default": "Visible"
+            },
+            "is_enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "render_opacity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 1
+            },
+            "text": {
+              "type": "string",
+              "maxLength": 4096,
+              "default": ""
+            },
+            "font_size": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 24
+            },
+            "font": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "color": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "minItems": 4,
+              "maxItems": 4,
+              "default": [
+                1,
+                1,
+                1,
+                1
+              ]
+            },
+            "justification": {
+              "type": "string",
+              "enum": [
+                "Left",
+                "Center",
+                "Right"
+              ],
+              "default": "Left"
+            },
+            "auto_wrap_text": {
+              "type": "boolean",
+              "default": false
+            },
+            "default": {}
+          },
+          "required": [],
+          "additionalProperties": false,
+          "default": {}
+        },
+        "slot": {
+          "$ref": "#/$defs/slot"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          },
+          "maxItems": 0,
+          "default": []
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "is_variable"
+      ],
+      "additionalProperties": false
+    },
+    "nodeSpacer": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "Spacer"
+          ]
+        },
+        "is_variable": {
+          "type": "boolean"
+        },
+        "properties": {
+          "type": "object",
+          "properties": {
+            "visibility": {
+              "type": "string",
+              "enum": [
+                "Visible",
+                "Collapsed",
+                "Hidden",
+                "HitTestInvisible",
+                "SelfHitTestInvisible"
+              ],
+              "default": "Visible"
+            },
+            "is_enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "render_opacity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 1
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 16384
+              },
+              "minItems": 2,
+              "maxItems": 2,
+              "default": [
+                0,
+                0
+              ]
+            },
+            "default": {}
+          },
+          "required": [],
+          "additionalProperties": false,
+          "default": {}
+        },
+        "slot": {
+          "$ref": "#/$defs/slot"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          },
+          "maxItems": 0,
+          "default": []
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "is_variable"
+      ],
+      "additionalProperties": false
+    },
+    "node": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/nodeCanvasPanel"
+        },
+        {
+          "$ref": "#/$defs/nodeOverlay"
+        },
+        {
+          "$ref": "#/$defs/nodeHorizontalBox"
+        },
+        {
+          "$ref": "#/$defs/nodeVerticalBox"
+        },
+        {
+          "$ref": "#/$defs/nodeBorder"
+        },
+        {
+          "$ref": "#/$defs/nodeSizeBox"
+        },
+        {
+          "$ref": "#/$defs/nodeScaleBox"
+        },
+        {
+          "$ref": "#/$defs/nodeButton"
+        },
+        {
+          "$ref": "#/$defs/nodeImage"
+        },
+        {
+          "$ref": "#/$defs/nodeTextBlock"
+        },
+        {
+          "$ref": "#/$defs/nodeSpacer"
+        }
+      ]
+    }
+  }
+}

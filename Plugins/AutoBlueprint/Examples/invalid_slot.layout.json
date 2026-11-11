@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "asset": {
+    "package_path": "/Game/UI/AutoBlueprintTests/WBP_P2_Example"
+  },
+  "design": {
+    "width": 1080,
+    "height": 1920
+  },
+  "root": {
+    "name": "RootCanvas",
+    "type": "CanvasPanel",
+    "is_variable": false,
+    "children": [
+      {
+        "name": "TXT_Title",
+        "type": "TextBlock",
+        "is_variable": true,
+        "slot": {
+          "type": "VerticalBox"
+        },
+        "properties": {
+          "text": "P2 validation",
+          "font_size": 32
+        }
+      },
+      {
+        "name": "BTN_Confirm",
+        "type": "Button",
+        "is_variable": true,
+        "slot": {
+          "type": "Canvas",
+          "offsets": [
+            64,
+            200,
+            300,
+            80
+          ]
+        },
+        "children": [
+          {
+            "name": "TXT_Confirm",
+            "type": "TextBlock",
+            "is_variable": true,
+            "slot": {
+              "type": "Button",
+              "horizontal_alignment": "Center",
+              "vertical_alignment": "Center"
+            },
+            "properties": {
+              "text": "Confirm"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

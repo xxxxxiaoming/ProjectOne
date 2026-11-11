@@ -12,6 +12,8 @@ class AUTOBLUEPRINTEDITOR_API UAutoBlueprintSubsystem : public UEditorSubsystem
 	GENERATED_BODY()
 
 public:
+	FAutoBlueprintValidationResult ValidateLayout(const FString& LayoutJson);
+	FAutoBlueprintValidationResult ValidateLayoutFile(const FString& ProjectRelativePath);
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 

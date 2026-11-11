@@ -13,6 +13,12 @@ class AUTOBLUEPRINTEDITOR_API UAutoBlueprintLibrary : public UBlueprintFunctionL
 	GENERATED_BODY()
 
 public:
+	/** Read-only P2 preflight on the idle editor game thread. Never creates/imports/saves assets. */
+	UFUNCTION(BlueprintCallable, Category = "AutoBlueprint|Validation")
+	static FAutoBlueprintValidationResult ValidateLayout(const FString& LayoutJson);
+	/** Read a project-relative .json below UIBlueprintLayouts or this plugin's Examples directory. */
+	UFUNCTION(BlueprintCallable, Category = "AutoBlueprint|Validation")
+	static FAutoBlueprintValidationResult ValidateLayoutFile(const FString& ProjectRelativePath);
 	/**
 	 * Run a trusted plugin tool synchronously on the editor game thread outside PIE/SIE.
 	 * ScriptPath is relative to Scripts/Lua; module.run receives Arguments as a Lua table.
