@@ -12,7 +12,8 @@ namespace
 {
 	using FObject = TSharedPtr<FJsonObject>;
 	using FValue = TSharedPtr<FJsonValue>;
-	void Error(FAutoBlueprintValidationResult& R, const FString& Code, const FString& Path, const FString& Message)
+	// Unity builds combine .cpp files; keep this helper distinct from the other validator.
+	void AddLayoutSchemaError(FAutoBlueprintValidationResult& R, const FString& Code, const FString& Path, const FString& Message)
 	{
 		if (R.Diagnostics.Num() >= 64) { return; }
 		FAutoBlueprintDiagnostic& D = R.Diagnostics.AddDefaulted_GetRef();
@@ -184,7 +185,7 @@ namespace
 			return bValid;
 		}
 	private:
-		bool Fail(const TCHAR* Code, const FString& Path, const FString& Message) { Error(Result, Code, Path, Message); return false; }
+		bool Fail(const TCHAR* Code, const FString& Path, const FString& Message) { AddLayoutSchemaError(Result, Code, Path, Message); return false; }
 	};
 
 }
@@ -195,7 +196,7 @@ bool ValidateLayoutStructure(const TSharedPtr<FJsonObject>& Document, FAutoBluep
 	FObject Schema;
 	if (!Plugin || !FFileHelper::LoadFileToString(SchemaText, *FPaths::Combine(Plugin->GetBaseDir(), TEXT("Resources/Schemas/layout.schema.json")))
 		|| !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(SchemaText), Schema))
-	{ Error(R, TEXT("SCHEMA_UNAVAILABLE"), TEXT("$"), TEXT("Cannot read bundled layout schema.")); return false; }
+	{ AddLayoutSchemaError(R, TEXT("SCHEMA_UNAVAILABLE"), TEXT("$"), TEXT("Cannot read bundled layout schema.")); return false; }
 	FSchemaCheck Checker(Schema, R);
 	return Checker.Check(MakeShared<FJsonValueObject>(Document), Schema, TEXT("$"));
 }

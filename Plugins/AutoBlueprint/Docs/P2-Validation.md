@@ -84,7 +84,7 @@ Schema 描述字段结构、范围和默认值；C++ 读取同一份文件并执
 | Draft 2020-12 Schema 自检、25 项有效/无效结构用例、注册类型一致性 | 云端通过（jsonschema 4.26.0） |
 | Lua 5.4.3 P0 15 项、P1 14 项兼容回归 | 云端通过（使用仓库自带 Lua 源码编译解释器） |
 | P2 Lua 门面转发、无效结果传播、生成能力边界 | 云端通过；模拟 UE 门面 |
-| UE 5.3.2 Win64 完整编译/UHT | 待用户本地验证 |
+| UE 5.3.2 Win64 完整编译/UHT | 初次本地编译报告 C2668/C4456；已提交修复，待本地重编译 |
 | AutoBlueprint.P2.Protocol / ReadOnlyConflicts / Examples / ResourcesAndDisk | 已编写，待 UE 执行 |
 | AutoBlueprint.P1 四项及 P0 五项回归 | 本次待 UE 执行 |
 | 真资源检查、未写入证明、Lua 真实反射 | 待用户本地验证 |
@@ -92,3 +92,11 @@ Schema 描述字段结构、范围和默认值；C++ 读取同一份文件并执
 离线运行：`python Scripts/Tests/p2_schema_test.py`（从插件目录，需 jsonschema）；仓库根目录执行 `lua Plugins/AutoBlueprint/Scripts/Tests/p2_sdk_test.lua`。
 
 本地补充：用已有 Texture2D/UFont 测试复用；错误类、缺资源、LFS 指针、损坏图片、资源目标与 Widget 重名应失败。对已有磁盘 Widget 执行预检应返回 ASSET_ALREADY_EXISTS，前后文件时间/内容及包 Dirty 状态保持一致。未保存包保护由 ReadOnlyConflicts 覆盖。检查普通编辑状态调用和 PIE/SIE 拒绝；连续有效→无效→有效不残留状态。完整运行上述四项 P2、四项 P1、五项 P0 测试后再记录 UE 通过，不以 Schema/Lua 离线通过替代 UE 编译或资产验证。
+
+## 6 2026-11-12 编译反馈修复
+
+用户首次本地编译报告两类错误：Unity Build 合并 LayoutValidation.cpp 与 LayoutSchemaValidator.cpp 后，匿名命名空间中两个 Error 辅助函数因默认参数产生重载歧义（C2668）；ValidateLayoutJson 内资源遍历的 Keys 遮蔽 JSON 键栈 Keys（C4456）。
+
+修复：分别命名为 AddLayoutValidationError、AddLayoutSchemaError；JSON 键栈改为 JsonObjectKeys，资源别名列表改为 ResourceAliases。保留 Unity Build、原诊断内容及校验行为。
+
+云端使用从源码提取的函数声明构造最小 C++ 编译检查：旧声明可复现歧义，新声明在两种合并顺序下通过；变量遮蔽检查以 -Wshadow -Werror 验证。另核对改动仅为命名和注释、CRLF 与差异格式。该检查不包含 UE 头文件，不替代 UE 5.3.2 编译；请 fetch 后重新编译，再执行第 1 节的自动化与手动验收。
