@@ -75,7 +75,38 @@ Schema 描述字段结构、范围和默认值；C++ 读取同一份文件并执
 - 图片源限定 `Content/UI/` 的 PNG/JPG/JPEG。检查存在性、32 MiB 文件上限、LFS 指针和实际图片解码；解码最多 16 百万像素。计划导入只记录目标包，不创建纹理、不改已有资源设置。
 - 预检可加载已有资源到内存，但没有 CreatePackage、工厂、导入、MarkPackageDirty、编译或保存调用。主线程/PIE/SIE/GC/保存状态使用现有上下文检查。
 
-典型错误码：INVALID_JSON、DUPLICATE_JSON_FIELD、UNSUPPORTED_SCHEMA_VERSION、MISSING_FIELD、UNKNOWN_FIELD、INVALID_FIELD_TYPE、INVALID_VALUE、LAYOUT_LIMIT、INVALID_LAYOUT_PATH、LAYOUT_READ_FAILED、INVALID_PACKAGE_PATH、ASSET_ALREADY_EXISTS、DUPLICATE_PACKAGE_TARGET、INVALID_OBJECT_PATH、MISSING_RESOURCE、INVALID_RESOURCE_TYPE、INVALID_SOURCE_PATH、LFS_SOURCE_NOT_MATERIALIZED、INVALID_IMAGE、UNSUPPORTED_WIDGET、INVALID_CHILD_COUNT、DUPLICATE_WIDGET_NAME、INVALID_SLOT、UNSUPPORTED_FOCUS_BRUSH、SCHEMA_UNAVAILABLE。JSON 语法及重复键错误定位文档根，其他错误提供字段路径。
+典型错误码及简要说明：
+
+| 错误码 | 简要说明 |
+| --- | --- |
+| `INVALID_JSON` | 布局内容无法解析为合法的 JSON 对象，例如语法错误或顶层不是对象。 |
+| `DUPLICATE_JSON_FIELD` | 同一个 JSON 对象中出现重复字段名。 |
+| `UNSUPPORTED_SCHEMA_VERSION` | `schema_version` 的值不在当前支持的版本中；目前仅支持版本 1。 |
+| `MISSING_FIELD` | 缺少 Schema 要求的必填字段。 |
+| `UNKNOWN_FIELD` | 出现当前协议不支持的字段，例如属性名拼写错误。 |
+| `INVALID_FIELD_TYPE` | 字段的 JSON 类型不正确，或不满足唯一一种结构分支，例如资源的两种声明形式混用。 |
+| `INVALID_VALUE` | 字段值不符合枚举、数值范围、整数、字符串长度或标识符规则，或控件名称使用 UE 保留名 `None`。 |
+| `LAYOUT_LIMIT` | 布局字符串大小、JSON 嵌套深度、Widget 总节点数/层级或资源数量超过上限。 |
+| `INVALID_LAYOUT_PATH` | 布局文件路径不在允许目录内，或不是合法的项目相对 `.json` 路径。 |
+| `LAYOUT_READ_FAILED` | 布局文件不存在、无法读取，或文件大小超过 1 MiB。 |
+| `INVALID_PACKAGE_PATH` | 目标包名不符合 UE 长包名规则、不在 `/Game/UI/` 下，或无法映射到项目文件路径。 |
+| `ASSET_ALREADY_EXISTS` | 目标包已存在于内存或磁盘，或目标文件已被占用；CreateOnly 要求使用新名称。 |
+| `DUPLICATE_PACKAGE_TARGET` | 同一布局中多个资源使用相同目标包，或资源目标包与 Widget 目标包重名。 |
+| `INVALID_OBJECT_PATH` | 已有资源引用不是合法的 UE 对象路径，或不在 `/Game/` 下。 |
+| `MISSING_RESOURCE` | 引用的资源别名未声明、已有资产无法加载，或源图片不存在、不可读、为空、超过 32 MiB。 |
+| `INVALID_RESOURCE_TYPE` | 已有资产的实际 UE 类型不符合要求，例如图片引用不是 Texture2D、字体引用不是 UFont。 |
+| `INVALID_SOURCE_PATH` | 源图片不在 `Content/UI/` 下，路径形式不合法，或扩展名不是 PNG/JPG/JPEG。 |
+| `LFS_SOURCE_NOT_MATERIALIZED` | 源图片实际是 Git LFS 指针文本，需要先下载真实图片内容。 |
+| `INVALID_IMAGE` | 源文件内容不是支持的 PNG/JPEG、无法解码、尺寸无效，或像素数超过 16 百万。 |
+| `UNSUPPORTED_WIDGET` | 控件类型不在当前 Schema 或原生控件注册表中，例如尚未支持的 ListView。 |
+| `INVALID_CHILD_COUNT` | 子节点数量违反叶子/单子节点/面板约束，或其他数组长度不符合 Schema，例如颜色不是 4 个分量。 |
+| `DUPLICATE_WIDGET_NAME` | 同一个 Widget 布局内出现重复控件名称；按 UE FName 规则忽略大小写。 |
+| `INVALID_SLOT` | 子节点缺少 Slot、Slot 类型未知或与父容器不匹配、根节点带 Slot，或锚点顺序/固定锚点尺寸非法。 |
+| `UNSUPPORTED_FOCUS_BRUSH` | 请求当前不支持的 `focused` 字段；原生 Button 样式没有独立的 Focused 画刷。 |
+| `SCHEMA_UNAVAILABLE` | 插件未找到，或随插件提供的 `layout.schema.json` 无法读取、解析。 |
+| `INVALID_SCHEMA` | 内部校验值或 Schema 规则无效，或 Schema 解释递归深度超过保护上限。 |
+
+`JsonPath` 用于定位问题：JSON 语法、重复键及整体大小/嵌套深度错误定位文档根 `$`，其他错误按检查阶段提供相关字段路径。资源结构不满足 `oneOf` 时可能汇总为 `INVALID_FIELD_TYPE`，具体原因结合诊断中的 `Message` 判断。
 
 ## 5 检查记录与本地验收
 
