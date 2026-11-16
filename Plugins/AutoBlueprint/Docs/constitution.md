@@ -1,6 +1,6 @@
 # AutoBlueprint 编码规范 Constitution
 
-版本：1.3 草案；日期：2026-11-06；适用基线：ProjectOne、Unreal Engine 5.3.2、UnLua 2.3.6、Win64 Editor。
+版本：1.4 草案；日期：2026-11-16；适用基线：ProjectOne、Unreal Engine 5.3.2、UnLua 2.3.6、Win64 Editor。
 
 本文约束 AutoBlueprint 项目插件及其 Lua 工具脚本、C++ 桥接、布局协议、测试和示例。遵循 UE 编码规范，并为后续控件/API 扩展保留清晰入口；脚本层采用项目已有 UnLua，资产构建核心位于 C++ Editor 模块。
 
@@ -35,6 +35,8 @@
 | 生成控件名称 | 稳定且有语义，例如 `RootCanvas`、`IMG_Product`、`BTN_Confirm`、`TXT_Total` |
 
 - C++ 使用 UE 的大括号与制表符缩进风格；新增 Lua 工具脚本使用四空格缩进、局部变量及模块返回表，避免隐式全局变量。调用静态函数用 `.`、实例方法按实际绑定使用 `:`；维护既有代码时保留其风格。
+- 新增及本次修改的 C++ 代码必须展开控制语句的代码块：`if`、`else`、`for`、`while`、`do`、`switch` 等使用独立成行的大括号，块内语句另起一行并缩进。即使只有一条 `return`、赋值或函数调用，也不得写成 `if (...) { return false; }` 这类单行代码块；不得把多条独立语句挤在同一行。
+- C++ 必须用空行分隔变量声明/定义（含初始化）与后续操作，以及不同的逻辑块或处理阶段，例如输入检查、路径拆分、路径转换和结果返回。用途相同的一组变量声明可以放在一起，但与后续执行语句之间至少空一行；`for`/`if` 头部内的声明仍按语言语法书写。同一逻辑块内紧密相关的语句可以连续排列，不要求机械地在每条语句后添加空行。空行不保留空格或制表符。这两条规则适用于后续新增和修改的自有 C++ 代码，不以此要求批量重排无关代码。
 - 源文件使用 UTF-8。新 C++ 文件沿用仓库的 CRLF 约定；其他文件保留相应语言和目录的现有换行格式，避免整文件换行变更。
 - 头文件使用 `#pragma once`。含反射声明的头文件必须把对应 `.generated.h` 放在最后一个 include。
 - 遵循 IWYU，显式包含所需声明；`.cpp` 优先包含对应头文件。不得依赖偶然的传递 include、Unity Build 或预编译头掩盖缺失依赖。
@@ -43,6 +45,40 @@
 - UObject、反射、容器和字符串优先采用适合 UE 的类型和机制。新增 `UCLASS`、`USTRUCT`、`UFUNCTION`、`UPROPERTY` 必须有反射、GC 或脚本调用的实际用途，不为所有内部类型都添加反射。
 - Public 头文件只暴露调用方需要的契约；实现细节放 Private。`Build.cs` 的 Public/Private 依赖必须与实际头文件暴露关系一致。
 - 注释解释约束、原因、生命周期和失败行为，避免复述代码。对外 API 必须说明输入、返回值、是否修改/保存资产、运行线程和适用阶段。
+
+C++ 代码块展开与空行分组示例：
+
+```cpp
+bool ProjectFile(const FString& Relative, const FString& Allowed, FString& Full)
+{
+	if (!FPaths::IsRelative(Relative) || Relative.Contains(TEXT("\\")) || Relative.Contains(TEXT(":")))
+	{
+		return false;
+	}
+
+	TArray<FString> Parts;
+
+	Relative.ParseIntoArray(Parts, TEXT("/"), false);
+	for (const FString& Part : Parts)
+	{
+		if (Part.IsEmpty() || Part == TEXT(".") || Part == TEXT(".."))
+		{
+			return false;
+		}
+	}
+
+	Full = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), Relative));
+
+	FPaths::NormalizeFilename(Full);
+
+	FString Root = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), Allowed));
+
+	FPaths::NormalizeDirectoryName(Root);
+
+	return Relative.StartsWith(Allowed + TEXT("/"), ESearchCase::CaseSensitive)
+		&& Full.StartsWith(Root + TEXT("/"), ESearchCase::CaseSensitive);
+}
+```
 
 Lua 通过 UnLua 调用真实的 UE 反射接口，例如 `UE.UAutoBlueprintLibrary.BuildFromLayoutFile(...)`，字段使用 `options.bSave`。这些自定义接口需在实现和桥接测试后才能标为可用；内部 Lua 辅助函数的命名不改变 UE 的反射名称。
 
@@ -180,6 +216,7 @@ Lua 通过 UnLua 调用真实的 UE 反射接口，例如 `UE.UAutoBlueprintLibr
 ## 11 代码评审检查项
 
 - [ ] 遵循 UE 命名、反射、头文件和模块依赖规范。
+- [ ] C++ 控制语句代码块已展开换行；变量声明与后续操作、不同逻辑块之间有清晰的空行分隔。
 - [ ] 新控件通过类型能力和适配器接入，正确区分叶子、单子节点、面板和数据驱动控件。
 - [ ] Schema/API、默认值、能力说明、示例和测试一致。
 - [ ] 生成资产无意外 Editor 类型引用，UObject 所有权和执行线程明确。
@@ -198,3 +235,4 @@ Lua 通过 UnLua 调用真实的 UE 反射接口，例如 `UE.UAutoBlueprintLibr
 | 1.1 草案 | 2026-10-30 | 脚本入口改为 Lua/UnLua，明确编辑器宿主、C++ 门面、命名、环境隔离、异常和验证要求 |
 | 1.2 草案 | 2026-11-06 | 明确单 UI、批量及资源导入的结果边界；单包保存语义、独立写入结果和 TODO API 的失败契约 |
 | 1.3 草案 | 2026-11-06 | 固化默认交付规则：实现和检查后推送功能分支，由用户本地 review/validate，默认不创建 PR 或合入 main |
+| 1.4 草案 | 2026-11-16 | 明确 C++ 控制语句代码块必须展开换行，变量声明与后续操作及不同逻辑块之间用空行分隔；补充示例和评审检查项 |
