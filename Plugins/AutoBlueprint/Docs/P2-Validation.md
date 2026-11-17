@@ -110,15 +110,15 @@ Schema 描述字段结构、范围和默认值；C++ 读取同一份文件并执
 
 ## 5 检查记录与本地验收
 
-| 检查 | 状态 |
-| --- | --- |
-| Draft 2020-12 Schema 自检、25 项有效/无效结构用例、注册类型一致性 | 云端通过（jsonschema 4.26.0） |
-| Lua 5.4.3 P0 15 项、P1 14 项兼容回归 | 云端通过（使用仓库自带 Lua 源码编译解释器） |
-| P2 Lua 门面转发、无效结果传播、生成能力边界 | 云端通过；模拟 UE 门面 |
-| UE 5.3.2 Win64 完整编译/UHT | 初次本地编译报告 C2668/C4456；已提交修复，待本地重编译 |
-| AutoBlueprint.P2.Protocol / ReadOnlyConflicts / Examples / ResourcesAndDisk | 已编写，待 UE 执行 |
-| AutoBlueprint.P1 四项及 P0 五项回归 | 本次待 UE 执行 |
-| 真资源检查、未写入证明、Lua 真实反射 | 待用户本地验证 |
+| 检查                                                                          | 状态                       |
+| --------------------------------------------------------------------------- | ------------------------ |
+| Draft 2020-12 Schema 自检、25 项有效/无效结构用例、注册类型一致性                               | 云端通过（jsonschema 4.26.0）  |
+| Lua 5.4.3 P0 15 项、P1 14 项兼容回归                                               | 云端通过（使用仓库自带 Lua 源码编译解释器） |
+| P2 Lua 门面转发、无效结果传播、生成能力边界                                                   | 云端通过；模拟 UE 门面            |
+| UE 5.3.2 Win64 完整编译/UHT                                                     | ✅                        |
+| AutoBlueprint.P2.Protocol / ReadOnlyConflicts / Examples / ResourcesAndDisk | ✅                        |
+| AutoBlueprint.P1 四项及 P0 五项回归                                                | ✅                        |
+| 真资源检查、未写入证明、Lua 真实反射                                                        | ✅                        |
 
 离线运行：`python Scripts/Tests/p2_schema_test.py`（从插件目录，需 jsonschema）；仓库根目录执行 `lua Plugins/AutoBlueprint/Scripts/Tests/p2_sdk_test.lua`。
 

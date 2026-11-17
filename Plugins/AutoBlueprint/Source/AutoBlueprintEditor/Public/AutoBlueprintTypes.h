@@ -44,6 +44,7 @@ struct AUTOBLUEPRINTEDITOR_API FAutoBlueprintValidationResult
 	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
 	bool bValid = false;
 	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
+	/** Planned asset object path, e.g. /Game/UI/WBP_Login.WBP_Login; not a disk filename. */
 	FString PlannedAssetPath;
 	/** Long package names planned for image import; no import has occurred. */
 	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
