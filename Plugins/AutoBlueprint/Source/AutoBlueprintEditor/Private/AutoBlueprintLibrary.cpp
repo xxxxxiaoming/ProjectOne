@@ -14,6 +14,7 @@ namespace
 			return nullptr;
 		}
 		UAutoBlueprintSubsystem* Subsystem = GEditor->GetEditorSubsystem<UAutoBlueprintSubsystem>();
+
 		if (!Subsystem)
 		{
 			Diagnostic.Code = TEXT("SUBSYSTEM_UNAVAILABLE");
@@ -26,11 +27,13 @@ namespace
 FAutoBlueprintBuildResult UAutoBlueprintLibrary::BuildSmokeTestWidget(const FAutoBlueprintSmokeTestRequest& Request)
 {
 	FAutoBlueprintDiagnostic Diagnostic;
+
 	if (UAutoBlueprintSubsystem* Subsystem = GetAvailableSubsystem(Diagnostic))
 	{
 		return Subsystem->BuildSmokeTestWidget(Request);
 	}
 	FAutoBlueprintBuildResult Result;
+
 	Result.Diagnostics.Add(MoveTemp(Diagnostic));
 	return Result;
 }
@@ -38,11 +41,13 @@ FAutoBlueprintBuildResult UAutoBlueprintLibrary::BuildSmokeTestWidget(const FAut
 FAutoBlueprintBatchBuildResult UAutoBlueprintLibrary::GenerateBatch(const FAutoBlueprintBatchRequest& Request)
 {
 	FAutoBlueprintDiagnostic Diagnostic;
+
 	if (UAutoBlueprintSubsystem* Subsystem = GetAvailableSubsystem(Diagnostic))
 	{
 		return Subsystem->GenerateBatch(Request);
 	}
 	FAutoBlueprintBatchBuildResult Result;
+
 	Result.Diagnostics.Add(Diagnostic);
 	Result.Results.SetNum(Request.Requests.Num());
 	for (FAutoBlueprintBuildResult& Item : Result.Results)
@@ -55,11 +60,13 @@ FAutoBlueprintBatchBuildResult UAutoBlueprintLibrary::GenerateBatch(const FAutoB
 FAutoBlueprintLuaRunResult UAutoBlueprintLibrary::RunEditorScript(const FAutoBlueprintLuaRunRequest& Request)
 {
 	FAutoBlueprintDiagnostic Diagnostic;
+
 	if (UAutoBlueprintSubsystem* Subsystem = GetAvailableSubsystem(Diagnostic))
 	{
 		return Subsystem->RunEditorScript(Request);
 	}
 	FAutoBlueprintLuaRunResult Result;
+
 	Result.Code = MoveTemp(Diagnostic.Code);
 	Result.Message = MoveTemp(Diagnostic.Message);
 	return Result;
@@ -68,11 +75,13 @@ FAutoBlueprintLuaRunResult UAutoBlueprintLibrary::RunEditorScript(const FAutoBlu
 FAutoBlueprintValidationResult UAutoBlueprintLibrary::ValidateLayout(const FString& LayoutJson)
 {
 	FAutoBlueprintDiagnostic Diagnostic;
+
 	if (UAutoBlueprintSubsystem* Subsystem = GetAvailableSubsystem(Diagnostic))
 	{
 		return Subsystem->ValidateLayout(LayoutJson);
 	}
 	FAutoBlueprintValidationResult Result;
+
 	Result.Diagnostics.Add(MoveTemp(Diagnostic));
 	return Result;
 }
@@ -80,11 +89,43 @@ FAutoBlueprintValidationResult UAutoBlueprintLibrary::ValidateLayout(const FStri
 FAutoBlueprintValidationResult UAutoBlueprintLibrary::ValidateLayoutFile(const FString& ProjectRelativePath)
 {
 	FAutoBlueprintDiagnostic Diagnostic;
+
 	if (UAutoBlueprintSubsystem* Subsystem = GetAvailableSubsystem(Diagnostic))
 	{
 		return Subsystem->ValidateLayoutFile(ProjectRelativePath);
 	}
 	FAutoBlueprintValidationResult Result;
+
+	Result.Diagnostics.Add(MoveTemp(Diagnostic));
+	return Result;
+}
+
+FAutoBlueprintBuildResult UAutoBlueprintLibrary::BuildWidgetBlueprint(const FString& LayoutJson, const FAutoBlueprintBuildOptions& Options)
+{
+	FAutoBlueprintDiagnostic Diagnostic;
+
+	if (UAutoBlueprintSubsystem* Subsystem = GetAvailableSubsystem(Diagnostic))
+	{
+		return Subsystem->BuildWidgetBlueprint(LayoutJson, Options);
+	}
+
+	FAutoBlueprintBuildResult Result;
+
+	Result.Diagnostics.Add(MoveTemp(Diagnostic));
+	return Result;
+}
+
+FAutoBlueprintBuildResult UAutoBlueprintLibrary::BuildFromLayoutFile(const FString& ProjectRelativePath, const FAutoBlueprintBuildOptions& Options)
+{
+	FAutoBlueprintDiagnostic Diagnostic;
+
+	if (UAutoBlueprintSubsystem* Subsystem = GetAvailableSubsystem(Diagnostic))
+	{
+		return Subsystem->BuildFromLayoutFile(ProjectRelativePath, Options);
+	}
+
+	FAutoBlueprintBuildResult Result;
+
 	Result.Diagnostics.Add(MoveTemp(Diagnostic));
 	return Result;
 }

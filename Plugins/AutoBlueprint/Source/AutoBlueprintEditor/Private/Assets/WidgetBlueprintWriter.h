@@ -20,5 +20,5 @@ namespace AutoBlueprint
 	 * Must run on the editor game thread outside PIE/SIE after successful tree construction.
 	 * Each call returns a fresh result; failures never overwrite the outcome of an earlier call.
 	 */
-	FAutoBlueprintWidgetWriteResult CompileAndSaveWidgetBlueprint(UWidgetBlueprint& Blueprint, bool bSave);
+	FAutoBlueprintWidgetWriteResult CompileAndSaveWidgetBlueprint(UWidgetBlueprint& Blueprint, bool bSave, const FVector2D* DesignSize = nullptr);
 }

@@ -30,8 +30,14 @@ local function execute(source, filename, arguments, overrides)
         print = function(message) output[#output + 1] = message end,
         UE = {
             FAutoBlueprintLuaRunRequest = function() return {} end,
+            FAutoBlueprintBuildOptions = function() return { bSave = true } end,
             UAutoBlueprintLibrary = {
                 RunEditorScript = function() return { bSuccess = false, Code = "EDITOR_BUSY" } end,
+                ValidateLayoutFile = function()
+                    return { bValid = false, Diagnostics = { ToTable = function()
+                        return { { Code = "LAYOUT_READ_FAILED", JsonPath = "$", Message = "Fixture file missing" } }
+                    end } }
+                end,
                 BuildSmokeTestWidget = function()
                     buildCalls = buildCalls + 1
                     error("Unexpected asset build")
@@ -119,10 +125,10 @@ test("false entry result", function()
     assert(not ok and message:find("Tool script must return true", 1, true))
 end)
 
-test("layout capability boundary", function()
+test("layout validation failure boundary", function()
     local ok, message, _, _, builds = execute(readFile(sourceRoot .. "generate_from_file.lua"),
         "generate_from_file.lua", { "UIBlueprintLayouts/test.layout.json" })
-    assert(not ok and message:find("NOT_IMPLEMENTED", 1, true) and builds == 0)
+    assert(not ok and message:find("LAYOUT_READ_FAILED", 1, true) and builds == 0)
 end)
 
 test("layout entry arguments", function()

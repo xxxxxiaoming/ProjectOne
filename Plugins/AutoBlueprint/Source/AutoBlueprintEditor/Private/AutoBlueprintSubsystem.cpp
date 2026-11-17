@@ -1,28 +1,23 @@
 #include "AutoBlueprintSubsystem.h"
-#include "Layout/LayoutValidation.h"
 
-#include "Assets/WidgetBlueprintWriter.h"
-#include "AssetRegistry/AssetRegistryModule.h"
+#include "Assets/LayoutBlueprintBuilder.h"
 #include "AutoBlueprintEditorContext.h"
-#include "Blueprint/UserWidget.h"
-#include "Blueprint/WidgetBlueprintGeneratedClass.h"
-#include "Engine/Blueprint.h"
+#include "Diagnostics/BuildReport.h"
 #include "HAL/FileManager.h"
-#include "Kismet2/KismetEditorUtilities.h"
+#include "Layout/LayoutValidation.h"
+#include "Layout/SmokeTestLayout.h"
 #include "Misc/PackageName.h"
-#include "Templates/UnrealTemplate.h"
 #include "Scripting/EditorLuaRunner.h"
 #include "Subsystems/SubsystemCollection.h"
+#include "Templates/UnrealTemplate.h"
 #include "UObject/Package.h"
-#include "UObject/StrongObjectPtr.h"
-#include "WidgetBlueprint.h"
-#include "Widgets/SmokeTestWidgetTree.h"
 
 namespace
 {
 	void AddError(FAutoBlueprintBuildResult& Result, const TCHAR* Code, const FString& Message)
 	{
 		FAutoBlueprintDiagnostic& Diagnostic = Result.Diagnostics.AddDefaulted_GetRef();
+
 		Diagnostic.Code = Code;
 		Diagnostic.AssetPath = Result.TargetAssetPath;
 		Diagnostic.Message = Message;
@@ -32,6 +27,7 @@ namespace
 	{
 		FText Reason;
 		const FString& PackagePath = Request.PackagePath;
+
 		if (!PackagePath.StartsWith(TEXT("/Game/UI/AutoBlueprintTests/"), ESearchCase::CaseSensitive)
 			|| !FPackageName::IsValidLongPackageName(PackagePath, false, &Reason))
 		{
@@ -41,6 +37,7 @@ namespace
 		}
 
 		const FString ObjectPath = PackagePath + TEXT(".") + FPackageName::GetLongPackageAssetName(PackagePath);
+
 		if (!FPackageName::IsValidObjectPath(ObjectPath, &Reason))
 		{
 			AddError(Result, TEXT("INVALID_PACKAGE_PATH"), Reason.ToString());
@@ -49,6 +46,7 @@ namespace
 		Result.TargetAssetPath = ObjectPath;
 
 		FString Filename;
+
 		if (!FPackageName::TryConvertLongPackageNameToFilename(PackagePath, Filename, FPackageName::GetAssetPackageExtension()))
 		{
 			AddError(Result, TEXT("INVALID_PACKAGE_PATH"), TEXT("The target package is not mounted in the project."));
@@ -76,58 +74,84 @@ FAutoBlueprintBuildResult UAutoBlueprintSubsystem::BuildSmokeTestWidget(const FA
 	FAutoBlueprintBuildResult Result;
 	FString ContextCode;
 	FString ContextMessage;
+
 	if (!AutoBlueprint::CheckEditorContext(ContextCode, ContextMessage))
 	{
 		AddError(Result, *ContextCode, ContextMessage);
 		return Result;
 	}
-	if (bBuildInProgress)
+	if (!bAcceptScriptRequests || bBuildInProgress)
 	{
-		AddError(Result, TEXT("EDITOR_BUSY"), TEXT("Another AutoBlueprint build is already in progress."));
+		AddError(Result, TEXT("EDITOR_BUSY"), TEXT("An initialized, idle editor subsystem is required."));
 		return Result;
 	}
-	TGuardValue<bool> BuildGuard(bBuildInProgress, true);
 	if (!ValidateRequest(Request, Result))
 	{
 		return Result;
 	}
 
-	TStrongObjectPtr<UPackage> Package(CreatePackage(*Request.PackagePath));
-	if (!Package.IsValid())
-	{
-		AddError(Result, TEXT("ASSET_CREATE_FAILED"), TEXT("Cannot create the new package."));
-		return Result;
-	}
-	Result.CreatedPackageName = Package->GetName();
+	FAutoBlueprintBuildOptions Options;
 
-	// Use UE's blueprint creation/compiler path and native UMG classes only.
-	TStrongObjectPtr<UWidgetBlueprint> Blueprint(Cast<UWidgetBlueprint>(FKismetEditorUtilities::CreateBlueprint(
-		UUserWidget::StaticClass(), Package.Get(), FName(*FPackageName::GetLongPackageAssetName(Request.PackagePath)),
-		BPTYPE_Normal, UWidgetBlueprint::StaticClass(), UWidgetBlueprintGeneratedClass::StaticClass(),
-		FName(TEXT("AutoBlueprint")))));
-	if (!Blueprint.IsValid())
-	{
-		AddError(Result, TEXT("ASSET_CREATE_FAILED"), TEXT("Unreal could not create the Widget Blueprint."));
-		return Result;
-	}
-	Blueprint->SetFlags(RF_Public | RF_Standalone | RF_Transactional);
-	Result.bAssetCreated = true;
-	FAssetRegistryModule::AssetCreated(Blueprint.Get());
-	Blueprint->MarkPackageDirty();
+	Options.bSave = Request.bSave;
+	Options.bWriteReport = false;
+	return BuildWidgetBlueprint(AutoBlueprint::MakeSmokeTestLayoutJson(Request), Options);
+}
 
-	if (!AutoBlueprint::BuildSmokeTestWidgetTree(*Blueprint.Get(), Request))
+FAutoBlueprintBuildResult UAutoBlueprintSubsystem::BuildWidgetBlueprint(const FString& LayoutJson, const FAutoBlueprintBuildOptions& Options)
+{
+	FAutoBlueprintBuildResult Result;
+	FString ContextCode;
+	FString ContextMessage;
+
+	if (!AutoBlueprint::CheckEditorContext(ContextCode, ContextMessage))
 	{
-		AddError(Result, TEXT("WIDGET_TREE_BUILD_FAILED"), TEXT("Cannot construct the fixed P0 widget tree. The new asset remains unsaved."));
+		AddError(Result, *ContextCode, ContextMessage);
 		return Result;
 	}
-	AutoBlueprint::FAutoBlueprintWidgetWriteResult WriteResult =
-		AutoBlueprint::CompileAndSaveWidgetBlueprint(*Blueprint.Get(), Request.bSave);
-	Result.bCompiled = WriteResult.bCompiled;
-	Result.bSaved = WriteResult.bSaved;
-	Result.Diagnostics.Append(MoveTemp(WriteResult.Diagnostics));
-	// If Request.bSave is false, then Result.bCompiled is true -> Result.bSuccess is true.
-	// If Request.bSave is true, then Result.bCompiled + Result.bSaved both true -> Result.bSuccess is true.
-	Result.bSuccess = Result.bCompiled && (!Request.bSave || Result.bSaved);
+	if (!bAcceptScriptRequests || bBuildInProgress)
+	{
+		AddError(Result, TEXT("EDITOR_BUSY"), TEXT("An initialized, idle editor subsystem is required."));
+		return Result;
+	}
+
+	TGuardValue<bool> BuildGuard(bBuildInProgress, true);
+
+	Result = AutoBlueprint::BuildLayoutBlueprint(LayoutJson, Options);
+	AutoBlueprint::WriteBuildReport(Result, Options);
+	return Result;
+}
+
+FAutoBlueprintBuildResult UAutoBlueprintSubsystem::BuildFromLayoutFile(const FString& ProjectRelativePath, const FAutoBlueprintBuildOptions& Options)
+{
+	FAutoBlueprintBuildResult Result;
+	FString ContextCode;
+	FString ContextMessage;
+
+	if (!AutoBlueprint::CheckEditorContext(ContextCode, ContextMessage))
+	{
+		AddError(Result, *ContextCode, ContextMessage);
+		return Result;
+	}
+	if (!bAcceptScriptRequests || bBuildInProgress)
+	{
+		AddError(Result, TEXT("EDITOR_BUSY"), TEXT("An initialized, idle editor subsystem is required."));
+		return Result;
+	}
+
+	TGuardValue<bool> BuildGuard(bBuildInProgress, true);
+	FAutoBlueprintValidationResult ReadResult;
+	FString Json;
+
+	if (AutoBlueprint::ReadLayoutFile(ProjectRelativePath, Json, ReadResult))
+	{
+		Result = AutoBlueprint::BuildLayoutBlueprint(Json, Options);
+	}
+	else
+	{
+		Result.Diagnostics = MoveTemp(ReadResult.Diagnostics);
+	}
+
+	AutoBlueprint::WriteBuildReport(Result, Options);
 	return Result;
 }
 
@@ -136,10 +160,12 @@ FAutoBlueprintBatchBuildResult UAutoBlueprintSubsystem::GenerateBatch(const FAut
 	// TODO: implement batch scheduling and aggregation after general layout requests are available.
 	// Do not loop over BuildSmokeTestWidget here: this API must remain free of asset side effects.
 	FAutoBlueprintDiagnostic Diagnostic;
+
 	Diagnostic.Code = TEXT("NOT_IMPLEMENTED");
 	Diagnostic.Message = TEXT("GenerateBatch is reserved for future implementation. No assets were created or saved.");
 
 	FAutoBlueprintBatchBuildResult Result;
+
 	Result.Diagnostics.Add(Diagnostic);
 	Result.Results.SetNum(Request.Requests.Num());
 	for (FAutoBlueprintBuildResult& Item : Result.Results)
@@ -166,6 +192,7 @@ void UAutoBlueprintSubsystem::Deinitialize()
 FAutoBlueprintLuaRunResult UAutoBlueprintSubsystem::RunEditorScript(const FAutoBlueprintLuaRunRequest& Request)
 {
 	FAutoBlueprintLuaRunResult Result;
+
 	if (!AutoBlueprint::CheckEditorContext(Result.Code, Result.Message))
 	{
 		return Result;
@@ -184,6 +211,7 @@ FAutoBlueprintLuaRunResult UAutoBlueprintSubsystem::RunEditorScript(const FAutoB
 	}
 	TGuardValue<bool> ScriptGuard(bScriptInProgress, true);
 	FAutoBlueprintEditorLuaRunner Runner;
+
 	return Runner.Run(Request);
 }
 
@@ -191,6 +219,7 @@ FAutoBlueprintValidationResult UAutoBlueprintSubsystem::ValidateLayout(const FSt
 {
 	FAutoBlueprintValidationResult Result;
 	FAutoBlueprintDiagnostic Diagnostic;
+
 	if (!AutoBlueprint::CheckEditorContext(Diagnostic.Code, Diagnostic.Message))
 	{
 		Result.Diagnostics.Add(MoveTemp(Diagnostic));
@@ -211,12 +240,17 @@ FAutoBlueprintValidationResult UAutoBlueprintSubsystem::ValidateLayoutFile(const
 {
 	FAutoBlueprintValidationResult Result;
 	FAutoBlueprintDiagnostic Diagnostic;
+
 	if (!AutoBlueprint::CheckEditorContext(Diagnostic.Code, Diagnostic.Message))
 	{
 		Result.Diagnostics.Add(MoveTemp(Diagnostic));
 		return Result;
 	}
 	FString Json;
-	if (!AutoBlueprint::ReadLayoutFile(ProjectRelativePath, Json, Result)) { return Result; }
+
+	if (!AutoBlueprint::ReadLayoutFile(ProjectRelativePath, Json, Result))
+	{
+		return Result;
+	}
 	return ValidateLayout(Json);
 }

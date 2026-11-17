@@ -26,6 +26,7 @@ for path, value in [
     (['root', 'type'], 'ListView'), (['root', 'is_variable'], 'false'),
     (['root', 'name'], 'bad name'), (['root', 'properties'], {'render_opacity': 2}),
     (['root', 'properties'], {'text': 'wrong widget'}),
+    (['root', 'properties'], {'default': {}}),
     (['resources'], {'bad.alias': {'object_path': '/Game/T.T'}}),
     (['resources'], {'pic': {'object_path': '/Game/T.T', 'source_file': 'Content/UI/p.png', 'package_path': '/Game/UI/T'}}),
     (['resources'], {'pic': {'source_file': 'Content/UI/p.png'}}),

@@ -74,6 +74,21 @@ struct AUTOBLUEPRINTEDITOR_API FAutoBlueprintSmokeTestRequest
 	bool bSave = true;
 };
 
+/** CreateOnly is the only write policy. Run synchronously on the idle editor game thread. */
+USTRUCT(BlueprintType)
+struct AUTOBLUEPRINTEDITOR_API FAutoBlueprintBuildOptions
+{
+	GENERATED_BODY()
+
+	/** False creates and compiles an unsaved asset; use ValidateLayout for read-only checks. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AutoBlueprint")
+	bool bSave = true;
+
+	/** Write a JSON outcome below Saved/AutoBlueprint/Reports, including ordinary failures. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AutoBlueprint")
+	bool bWriteReport = true;
+};
+
 /** One Widget Blueprint in one newly created package. Never reuse this as a batch accumulator. */
 USTRUCT(BlueprintType)
 struct AUTOBLUEPRINTEDITOR_API FAutoBlueprintBuildResult
@@ -103,6 +118,10 @@ struct AUTOBLUEPRINTEDITOR_API FAutoBlueprintBuildResult
 	/** Package actually created by this operation, even if asset creation later fails. Empty otherwise. */
 	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
 	FString CreatedPackageName;
+
+	/** Absolute JSON report filename, empty if disabled or writing failed. Not an asset package. */
+	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
+	FString ReportFilePath;
 
 	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
 	TArray<FAutoBlueprintDiagnostic> Diagnostics;

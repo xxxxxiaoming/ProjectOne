@@ -12,6 +12,15 @@ class AUTOBLUEPRINTEDITOR_API UAutoBlueprintSubsystem : public UEditorSubsystem
 	GENERATED_BODY()
 
 public:
+	/** Validate again, then create one native Widget Blueprint; never replaces an existing package.
+	 * Editor game thread outside PIE/SIE only. Failed compilation never saves the Widget.
+	 * bSave=false still creates an in-memory asset. See result for partial creation and report path.
+	 */
+	FAutoBlueprintBuildResult BuildWidgetBlueprint(const FString& LayoutJson, const FAutoBlueprintBuildOptions& Options);
+
+	/** Same build contract; reads a project-relative JSON under the validated layout directories. */
+	FAutoBlueprintBuildResult BuildFromLayoutFile(const FString& ProjectRelativePath, const FAutoBlueprintBuildOptions& Options);
+
 	FAutoBlueprintValidationResult ValidateLayout(const FString& LayoutJson);
 	FAutoBlueprintValidationResult ValidateLayoutFile(const FString& ProjectRelativePath);
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;

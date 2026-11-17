@@ -147,11 +147,11 @@ bool FAutoBlueprintP1FileEntryBoundaryTest::RunTest(const FString& Parameters)
 	}
 	FAutoBlueprintLuaRunRequest Request;
 	Request.ScriptPath = TEXT("generate_from_file.lua");
-	Request.Arguments.Add(TEXT("UIBlueprintLayouts/NotImplemented.layout.json"));
+	Request.Arguments.Add(TEXT("UIBlueprintLayouts/../P1_Forbidden.layout.json"));
 	const FAutoBlueprintLuaRunResult Result = UAutoBlueprintLibrary::RunEditorScript(Request);
-	TestFalse(TEXT("P1 must not pretend to generate a layout"), Result.bSuccess);
+	TestFalse(TEXT("Invalid file input must fail without generating a layout"), Result.bSuccess);
 	TestEqual(TEXT("Lua API failure reaches the host"), Result.Code, FString(TEXT("LUA_SCRIPT_FAILED")));
-	TestTrue(TEXT("Missing capability is explicit"), Result.Message.Contains(TEXT("NOT_IMPLEMENTED")));
+	TestTrue(TEXT("File failure is explicit"), Result.Message.Contains(TEXT("INVALID_LAYOUT_PATH")));
 	TestTrue(TEXT("Entry script is identifiable"), Result.Message.Contains(TEXT("generate_from_file.lua:")));
 
 	Request.Arguments.Reset();

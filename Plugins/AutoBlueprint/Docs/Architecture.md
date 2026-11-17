@@ -1,6 +1,6 @@
 # AutoBlueprint 项目插件架构设计草案
 
-本方案用于在 ProjectOne 项目内实现 AutoBlueprint 编辑器插件：通过 Lua + UnLua 调用 C++ 编辑器核心，把经过审阅的 JSON 布局配置转换为标准 User Widget Blueprint `.uasset`，在 UMG Designer 中打开即可查看和编辑控件树。目标版本为 UE 5.3.2、UnLua 2.3.6，首版以 Win64 Editor 为验证基线。版本为 0.4 草案，更新日期 2026-11-06；通用布局接口仍为拟定设计，P0 结果契约已验证，P1 工具宿主及引号参数修复已本地验证，P2 只读校验已实现待本地验证，入口分别见 P0-Validation.md 与 P1-Validation.md。
+本方案用于在 ProjectOne 项目内实现 AutoBlueprint 编辑器插件：通过 Lua + UnLua 调用 C++ 编辑器核心，把经过审阅的 JSON 布局配置转换为标准 User Widget Blueprint `.uasset`，在 UMG Designer 中打开即可查看和编辑控件树。目标版本为 UE 5.3.2、UnLua 2.3.6，首版以 Win64 Editor 为验证基线。版本为 0.5 草案，更新日期 2026-11-17；P0/P1/P2 已由用户本地验证，P3 通用生成链路已实现、待本地编译与验收，见 P3-Validation.md。
 
 ## 1 范围与待确认项
 
@@ -14,7 +14,7 @@
 | 插件位置 | `ProjectOne/Plugins/AutoBlueprint/` |
 | 资产位置 | 项目 `/Game/UI/...`，对应 `ProjectOne/Content/UI/...` |
 | 重复生成 | 首版 CreateOnly；覆盖重建和保留人工修改的更新作为后续独立能力 |
-| 当前实现 | P0/P1 已本地验证；P2 协议与只读校验已实现待 UE 验证，详见 [P2 验证说明](P2-Validation.md) |
+| 当前实现 | P0/P1/P2 已本地验证；P3 已实现待 UE 验证，详见 [P3 验证说明](P3-Validation.md) |
 
 这里的“直接可用”指蓝图能够成功编译、保存、重新打开、实例化并通过 `AddToViewport` 显示。原生按钮可呈现常规交互样式，点击之后的游戏业务行为由后续逻辑实现。
 
@@ -97,7 +97,7 @@ ProjectOne/
 └─ Saved/AutoBlueprint/Reports/
 ```
 
-架构、编码规范与计划集中在 `Plugins/AutoBlueprint/Docs/`，该目录现另有 P0 验证说明。上图为目标结构；P0 已建立最小插件、Lua 宿主、反射门面、固定树构建和编译保存代码，通用布局解析、资源、注册表及生成资产仍为后续项。Lua 工具脚本放在插件 `Scripts/Lua/` 下，由 EditorLuaRunner 显式加载；不放进项目默认会随游戏分发的 `Content/Script/`。项目专用布局配置放在 `UIBlueprintLayouts/` 并纳入版本控制；报告放在 Saved 下。业务 Widget 名称继续遵循现有 `WBP_CashierMain` 等约定。
+架构、编码规范与计划集中在 `Plugins/AutoBlueprint/Docs/`，该目录现另有 P0 验证说明。上图为目标结构；P0/P1 已建立插件和 Lua 入口，P2 实现解析/校验与注册表，P3 接通统一构树及编译保存，实际文件职责见 P3-Validation.md；资源处理仍待 P4。Lua 工具脚本放在插件 `Scripts/Lua/` 下，由 EditorLuaRunner 显式加载；不放进项目默认会随游戏分发的 `Content/Script/`。项目专用布局配置放在 `UIBlueprintLayouts/` 并纳入版本控制；报告放在 Saved 下。业务 Widget 名称继续遵循现有 `WBP_CashierMain` 等约定。
 
 ## 5 模块职责与依赖
 
@@ -311,7 +311,7 @@ Canvas 的 `offsets` 对应 `[Left, Top, Right, Bottom]`。某一轴锚点相同
 
 ## 8 C++ 与 Lua 接口框架
 
-P2 已提供静态门面 `ValidateLayout(LayoutJson)`、`ValidateLayoutFile(ProjectRelativePath)`，返回 `FAutoBlueprintValidationResult`。Schema 和默认值位于 `Resources/Schemas/layout.schema.json`；类型能力登记在 `WidgetTypeRegistry`，内部类型化数据在 `LayoutSpec.h`。C++ 在结构校验后检查名称、Slot、目标冲突和真实资源，整个入口不创建、导入或保存资产。以下通用构建接口仍是 P3 设计，P2 的准确字段、范围、默认值和验证状态见 [P2-Validation.md](P2-Validation.md)。
+P2 已提供静态门面 `ValidateLayout(LayoutJson)`、`ValidateLayoutFile(ProjectRelativePath)`，返回 `FAutoBlueprintValidationResult`。Schema 和默认值位于 `Resources/Schemas/layout.schema.json`；类型能力登记在 `WidgetTypeRegistry`，内部类型化数据在 `LayoutSpec.h`。C++ 在结构校验后检查名称、Slot、目标冲突和真实资源，整个入口不创建、导入或保存资产。通用构建接口现已在 P3 实现；P2 的字段和默认值见 [P2-Validation.md](P2-Validation.md)，P3 当前可生成的子集、构建选项与结果见 [P3-Validation.md](P3-Validation.md)。
 
 P1 已实现 `UAutoBlueprintLibrary::RunEditorScript(const FAutoBlueprintLuaRunRequest&)`，转调编辑器子系统。请求携带插件工具目录下的相对 `ScriptPath` 和字符串 `Arguments`；结果 `FAutoBlueprintLuaRunResult` 提供脚本完成状态、错误码、原始错误/调用栈及已解析路径，与资产构建结果独立。
 
@@ -319,7 +319,7 @@ P1 采用 Output Log 命令入口（`AutoBlueprint.Run`、`AutoBlueprint.Generat
 
 `require("examples.helper")` 仅发现 `Scripts/Lua/examples/helper.lua`，使用每任务缓存与循环依赖检测，不回退到游戏或原生模块搜索路径。脚本是可信项目工具，加载路径约束不构成不可信代码沙箱。脚本返回带 `run(arguments)` 的表，任务成功需返回 true。限制与示例见 [P1-Validation.md](P1-Validation.md)。
 
-C++ 核心仍由编辑器子系统提供 ValidateLayout 和 BuildWidgetBlueprint。面向 Lua 增加静态 UFUNCTION 门面 AutoBlueprintLibrary，提供文件入口并转调子系统。以下为接口设计示意；类型定义、桥接行为与 UE 5.3.2 编译验证在实施阶段完成。
+C++ 核心仍由编辑器子系统提供 ValidateLayout 和 BuildWidgetBlueprint。面向 Lua 增加静态 UFUNCTION 门面 AutoBlueprintLibrary，提供文件入口并转调子系统。以下省略无关声明；真实声明以 Public 头文件为准。P3 反射和 UE 5.3.2 编译待本地验证。
 
 ```cpp
 #pragma once
@@ -375,15 +375,14 @@ public:
 };
 ```
 
-| 反射类型 | C++ 和 Lua 使用的拟定字段 |
+| 反射类型 | C++ 和 Lua 当前字段 |
 | --- | --- |
 | `FAutoBlueprintDiagnostic` | Severity、Code、JsonPath、WidgetName、AssetPath、Message |
 | `FAutoBlueprintValidationResult` | bValid、Diagnostics、PlannedImports、PlannedAssetPath |
-| `FAutoBlueprintBuildOptions` | WritePolicy（默认 CreateOnly）、bSave（默认 true）、bOpenEditor（默认 false） |
-| `FAutoBlueprintBuildResult` | 单个 UI：bSuccess、bAssetCreated、bCompiled、bSaved、TargetAssetPath、CreatedPackageName、Diagnostics |
+| `FAutoBlueprintBuildOptions` | bSave、bWriteReport（默认均 true）；CreateOnly 固定策略，不暴露覆盖或自动打开编辑器选项 |
+| `FAutoBlueprintBuildResult` | 单个 UI：bSuccess、bAssetCreated、bCompiled、bSaved、TargetAssetPath、CreatedPackageName、ReportFilePath、Diagnostics |
 | `FAutoBlueprintBatchRequest` | Requests；P0 占位输入为固定样例请求数组，通用布局请求在 P2/P3 设计 |
 | `FAutoBlueprintBatchBuildResult` | Results（与请求顺序一致）、Diagnostics（批量级错误）；无汇总 bSaved |
-| `EAutoBlueprintWritePolicy` | 首版仅 CreateOnly；重建策略留待后续设计 |
 
 当前单次构建严格对应一个 Widget Blueprint 和一个新建目标 Package。批量生成通过独立的请求与结果承载多个 UI，不能把多个 UI 的状态累加到同一个 `FAutoBlueprintBuildResult`：
 
@@ -392,15 +391,14 @@ public:
 - `bSaved` 仅表示本次操作成功保存了这个目标包。`bSave=false` 且构建/编译成功时，`bSuccess=true`、`bSaved=false`。
 - 编译保存函数返回独立的内部写入结果，子系统将其组合到本次构建结果；不会修改其他构建或批量结果。
 - `GenerateBatch(const FAutoBlueprintBatchRequest&)` 已预留为可反射调用的 TODO API。正常编辑上下文中返回批量级及逐项 `NOT_IMPLEMENTED`，不进行路径校验、创建、编译或保存；空请求也明确报错。每个请求保留对应的结果位置。
-- 批量汇总、停止/继续策略和通用布局请求仍待后续实现；汇总将由逐项结果计算。不得用空数组推断“全部保存”，也不承诺跨包回滚。
+- 批量汇总、停止/继续策略和批量布局请求仍待后续实现；汇总将由逐项结果计算。不得用空数组推断“全部保存”，也不承诺跨包回滚。
 
 这次调整属于 P0 C++/Lua API 的破坏性变更，旧的结果字段不保留别名；迁移说明见 [P0-Validation.md](P0-Validation.md)。布局 JSON 的 `schema_version` 未改变。P4 导入纹理会产生额外资源包，必须先独立设计资源导入结果与逐包记录，再由任务报告组合；不能改变单 UI 结果的 `bSaved` 含义。
 
 返回类型使用 USTRUCT/UENUM 和 UPROPERTY，使 UnLua 能读取结果。Lua 访问反射字段保留 C++ 实际名称，例如 `result.bSuccess` 和 `options.bSave`；JSON 与磁盘报告继续使用约定的 `lower_snake_case` 字段。验证可读取文件、检查已有资产与资源类型，但不创建、导入或保存资产；构建时重新校验，避免预检与执行间状态变化。
 
 ```lua
--- 拟定用法：由 AutoBlueprint 的编辑器 Lua 入口执行。
--- 这些自定义接口需要完成插件实现与 UE 验证后才可调用。
+-- P3 用法：由 AutoBlueprint 的编辑器 Lua 入口执行；当前实现待 UE 本地验收。
 local layoutPath = "UIBlueprintLayouts/Cashier/main.layout.json"
 
 local function printDiagnostics(diagnostics)
@@ -416,9 +414,8 @@ if not validation.bValid then
 end
 
 local options = UE.FAutoBlueprintBuildOptions()
-options.WritePolicy = UE.EAutoBlueprintWritePolicy.CreateOnly
 options.bSave = true
-options.bOpenEditor = false
+options.bWriteReport = true
 
 local result = UE.UAutoBlueprintLibrary.BuildFromLayoutFile(
     layoutPath, options
@@ -495,4 +492,4 @@ print("Generated: " .. result.TargetAssetPath)
 
 现有收银 UI 的 `ASSET_MAP.md`、`UMG_LAYOUT.md` 与交互稿作为布局和命名依据。其中整板 JPG 应作为参考，不能用一张整板图片代替可编辑控件树；缺少独立切图的区域需要补图，或在确认后用原生控件组合表达。
 
-版本 0.4 草案以 Lua + UnLua + C++ 编辑器核心为实施基线。首版使用 CreateOnly，业务事件绑定、覆盖重建及增量更新留作后续能力。P0 及结果重构已由用户验证；P1 已本地验证，P2 代码已交付待本地验证，记录见 `P0-Validation.md`、`P1-Validation.md` 与 `P2-Validation.md`。
+版本 0.5 草案以 Lua + UnLua + C++ 编辑器核心为实施基线。首版使用 CreateOnly，业务事件绑定、覆盖重建及增量更新留作后续能力。P0 及结果重构已由用户验证；P1/P2 已本地验证；P3 已实现待本地验收，记录见 `P0-Validation.md` 至 `P3-Validation.md`。

@@ -4,7 +4,8 @@ local module = {}
 local function formatDiagnostics(diagnostics)
     local messages = {}
     for _, item in ipairs(diagnostics:ToTable()) do
-        messages[#messages + 1] = item.Code .. ": " .. item.Message
+        local location = item.JsonPath and item.JsonPath ~= "" and (item.JsonPath .. ": ") or ""
+        messages[#messages + 1] = item.Code .. ": " .. location .. item.Message
     end
     return table.concat(messages, "\n")
 end
@@ -26,6 +27,10 @@ function module.reportBuildResult(result, saveRequested)
     if result.CreatedPackageName ~= "" then
         local label = result.bSaved and "Saved package: " or "Unsaved package: "
         print(label .. result.CreatedPackageName)
+    end
+
+    if result.ReportFilePath and result.ReportFilePath ~= "" then
+        print("Build report: " .. result.ReportFilePath)
     end
 
     local diagnostics = formatDiagnostics(result.Diagnostics)
@@ -63,12 +68,18 @@ function module.validateLayoutFile(layoutPath)
     return UE.UAutoBlueprintLibrary.ValidateLayoutFile(layoutPath)
 end
 
-function module.generateFromFile(layoutPath)
+function module.generateFromFile(layoutPath, options)
     assert(type(layoutPath) == "string" and layoutPath ~= "",
         "INVALID_ARGUMENTS: expected a project-relative layout file path")
-    -- P2 provides read-only validation; actual layout construction belongs to P3.
-    -- Never substitute the fixed P0 tree for a requested layout.
-    error("NOT_IMPLEMENTED: layout-file generation requires P2/P3. No layout was read and no asset was created.", 2)
+    options = options or UE.FAutoBlueprintBuildOptions()
+    assert(type(options.bSave) == "boolean", "bSave must be a Lua boolean")
+    -- This preview is read-only. C++ repeats validation immediately before writing.
+    local validation = module.validateLayoutFile(layoutPath)
+    if not validation.bValid then
+        error("Layout validation failed:\n" .. formatDiagnostics(validation.Diagnostics), 2)
+    end
+    local result = UE.UAutoBlueprintLibrary.BuildFromLayoutFile(layoutPath, options)
+    return module.reportBuildResult(result, options.bSave)
 end
 
 return module

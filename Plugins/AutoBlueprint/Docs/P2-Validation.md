@@ -27,7 +27,7 @@ FAutoBlueprintValidationResult ValidateLayoutFile(const FString& ProjectRelative
 
 共享 `auto_blueprint.lua` 提供 `validateLayout(json)`、`validateLayoutFile(path)`，直接返回结果；无效布局不被 SDK 隐藏。结果字段：`bValid`、`PlannedAssetPath`、`PlannedImports`、`Diagnostics`。后两种计划路径不表示已创建、预留或导入资产；无效结果中也可能有部分计划信息。诊断字段继续使用 `Code/JsonPath/WidgetName/AssetPath/Message/Severity`。生成前必须再次校验，不能依赖之前的预检。
 
-`AutoBlueprint.GenerateFromFile` 和 SDK `generateFromFile` 仍明确失败，不会用 P0 固定树代替布局。P1 旧错误文本仍为 P2/P3 能力提示，兼容原回归；实际生成待 P3。
+P2 交付时 `AutoBlueprint.GenerateFromFile` 与 SDK `generateFromFile` 保留未实现边界。当前 P3 已接通文件生成，支持范围和新增验证见 [P3-Validation.md](P3-Validation.md)；本页保留 P2 只读校验及已完成的验收记录。
 
 ## 2 协议与默认值
 

@@ -88,7 +88,7 @@ public:
 			FConsoleCommandWithArgsDelegate::CreateRaw(this, &FAutoBlueprintEditorModule::RunScript));
 		GenerateFromFileCommand = MakeUnique<FAutoConsoleCommand>(
 			TEXT("AutoBlueprint.GenerateFromFile"),
-			TEXT("Invoke generate_from_file.lua. P1 reports NOT_IMPLEMENTED until P2/P3 layout support is available."),
+			TEXT("Validate and generate one JSON layout through generate_from_file.lua using CreateOnly."),
 			FConsoleCommandWithArgsDelegate::CreateRaw(this, &FAutoBlueprintEditorModule::GenerateFromFile));
 		HelpCommand = MakeUnique<FAutoConsoleCommand>(
 			TEXT("AutoBlueprint.Help"),
@@ -185,7 +185,7 @@ private:
 		UE_LOG(LogAutoBlueprint, Log, TEXT("AutoBlueprint.Run examples/hello.lua - no asset writes; quote arguments containing spaces."));
 		UE_LOG(LogAutoBlueprint, Log, TEXT("Run arguments: double quotes wrap whole arguments; empty quotes preserve an empty argument. Whitespace inside quotes becomes one space; inside quotes, \\\" and \\\\ escape quotes and backslashes. Other commands retain their existing argument rules."));
 		UE_LOG(LogAutoBlueprint, Log, TEXT("AutoBlueprint.P0.Generate <new_package_path> - fixed Widget Blueprint; AutoBlueprint.P0.ErrorProbe - traceback probe."));
-		UE_LOG(LogAutoBlueprint, Log, TEXT("AutoBlueprint.GenerateFromFile <layout_path> - P1 entry only; JSON generation (P2/P3) and GenerateBatch are not implemented."));
+		UE_LOG(LogAutoBlueprint, Log, TEXT("AutoBlueprint.GenerateFromFile <layout_path> - generate/save one P3 Canvas/Text/Button layout; existing targets are rejected. GenerateBatch is not implemented."));
 	}
 
 	void RunBundled(const FString& ScriptPath, const TArray<FString>& Arguments)

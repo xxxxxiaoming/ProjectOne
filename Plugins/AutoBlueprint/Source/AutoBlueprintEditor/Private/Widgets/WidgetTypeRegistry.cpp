@@ -1,4 +1,6 @@
 #include "Widgets/WidgetTypeRegistry.h"
+
+#include "Widgets/WidgetBuildHandlers.h"
 #include "Components/CanvasPanel.h"
 #include "Components/Overlay.h"
 #include "Components/HorizontalBox.h"
@@ -10,27 +12,34 @@
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Components/Spacer.h"
+
 namespace AutoBlueprint
 {
 	const FWidgetTypeDescriptor* FindWidgetType(const FString& Name)
 	{
-		static const FWidgetTypeDescriptor Types[] = {
-			{ TEXT("CanvasPanel"), TEXT("Canvas"), EChildPolicy::Panel, &UCanvasPanel::StaticClass },
+		static const FWidgetTypeDescriptor Types[] =
+		{
+			{ TEXT("CanvasPanel"), TEXT("Canvas"), EChildPolicy::Panel, &UCanvasPanel::StaticClass, true, nullptr, nullptr, &ApplyCanvasChildSlot },
 			{ TEXT("Overlay"), TEXT("Overlay"), EChildPolicy::Panel, &UOverlay::StaticClass },
 			{ TEXT("HorizontalBox"), TEXT("HorizontalBox"), EChildPolicy::Panel, &UHorizontalBox::StaticClass },
 			{ TEXT("VerticalBox"), TEXT("VerticalBox"), EChildPolicy::Panel, &UVerticalBox::StaticClass },
 			{ TEXT("Border"), TEXT("Border"), EChildPolicy::Single, &UBorder::StaticClass },
 			{ TEXT("SizeBox"), TEXT("SizeBox"), EChildPolicy::Single, &USizeBox::StaticClass },
 			{ TEXT("ScaleBox"), TEXT("ScaleBox"), EChildPolicy::Single, &UScaleBox::StaticClass },
-			{ TEXT("Button"), TEXT("Button"), EChildPolicy::Single, &UButton::StaticClass },
+			{ TEXT("Button"), TEXT("Button"), EChildPolicy::Single, &UButton::StaticClass, true, &ValidateBasicButtonBuild, &ApplyBasicButtonProperties, &ApplyButtonChildSlot },
 			{ TEXT("Image"), TEXT(""), EChildPolicy::Leaf, &UImage::StaticClass },
-			{ TEXT("TextBlock"), TEXT(""), EChildPolicy::Leaf, &UTextBlock::StaticClass },
+			{ TEXT("TextBlock"), TEXT(""), EChildPolicy::Leaf, &UTextBlock::StaticClass, true, &ValidateBasicTextBuild, &ApplyBasicTextProperties, nullptr },
 			{ TEXT("Spacer"), TEXT(""), EChildPolicy::Leaf, &USpacer::StaticClass },
 		};
+
 		for (const FWidgetTypeDescriptor& Type : Types)
 		{
-			if (Name == Type.Name) { return &Type; }
+			if (Name == Type.Name)
+			{
+				return &Type;
+			}
 		}
+
 		return nullptr;
 	}
 }

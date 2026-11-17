@@ -1,6 +1,7 @@
 #include "Assets/WidgetBlueprintWriter.h"
 
 #include "AutoBlueprintLog.h"
+#include "Blueprint/UserWidget.h"
 #include "AutoBlueprintTypes.h"
 #include "Engine/Blueprint.h"
 #include "HAL/FileManager.h"
@@ -21,23 +22,26 @@ namespace
 		const TCHAR* Code, const FString& Message)
 	{
 		FAutoBlueprintDiagnostic& Diagnostic = Result.Diagnostics.AddDefaulted_GetRef();
+
 		Diagnostic.Code = Code;
 		Diagnostic.AssetPath = Blueprint.GetPathName();
 		Diagnostic.Message = Message;
 	}
 }
 
-AutoBlueprint::FAutoBlueprintWidgetWriteResult AutoBlueprint::CompileAndSaveWidgetBlueprint(UWidgetBlueprint& Blueprint, bool bSave)
+AutoBlueprint::FAutoBlueprintWidgetWriteResult AutoBlueprint::CompileAndSaveWidgetBlueprint(UWidgetBlueprint& Blueprint, bool bSave, const FVector2D* DesignSize)
 {
 	FAutoBlueprintWidgetWriteResult Result;
-	FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(&Blueprint);
 	FCompilerResultsLog CompilerLog;
+
+	FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(&Blueprint);
 	CompilerLog.bSilentMode = true;
 	FKismetEditorUtilities::CompileBlueprint(&Blueprint, EBlueprintCompileOptions::None, &CompilerLog);
 
 	for (const TSharedRef<FTokenizedMessage>& Message : CompilerLog.Messages)
 	{
 		FAutoBlueprintDiagnostic& Diagnostic = Result.Diagnostics.AddDefaulted_GetRef();
+
 		Diagnostic.AssetPath = Blueprint.GetPathName();
 		Diagnostic.Message = Message->ToText().ToString();
 		switch (Message->GetSeverity())
@@ -65,6 +69,22 @@ AutoBlueprint::FAutoBlueprintWidgetWriteResult AutoBlueprint::CompileAndSaveWidg
 		AddWriterError(Result, Blueprint, TEXT("BLUEPRINT_COMPILE_FAILED"), TEXT("Compilation failed. The new Widget Blueprint has not been saved."));
 		return Result;
 	}
+	if (DesignSize)
+	{
+		// Designer size belongs to the generated UserWidget CDO, not the Blueprint or a preview instance.
+		UUserWidget* Defaults = Cast<UUserWidget>(Blueprint.GeneratedClass->GetDefaultObject());
+
+		if (!Defaults)
+		{
+			Result.bCompiled = false;
+			AddWriterError(Result, Blueprint, TEXT("BLUEPRINT_COMPILE_FAILED"), TEXT("The generated class has no native UserWidget defaults. The asset is not saved."));
+			return Result;
+		}
+
+		Defaults->DesignSizeMode = EDesignPreviewSizeMode::Custom;
+		Defaults->DesignTimeSize = *DesignSize;
+		Blueprint.MarkPackageDirty();
+	}
 	if (!bSave)
 	{
 		// A successful in-memory compile does not imply that the package was saved.
@@ -74,6 +94,7 @@ AutoBlueprint::FAutoBlueprintWidgetWriteResult AutoBlueprint::CompileAndSaveWidg
 	UPackage* Package = Blueprint.GetOutermost();
 	const FString PackageName = Package->GetName();
 	FString Filename;
+
 	if (!FPackageName::TryConvertLongPackageNameToFilename(PackageName, Filename, FPackageName::GetAssetPackageExtension()))
 	{
 		AddWriterError(Result, Blueprint, TEXT("INVALID_PACKAGE_PATH"), TEXT("Cannot resolve the package to a project asset filename."));
@@ -93,6 +114,7 @@ AutoBlueprint::FAutoBlueprintWidgetWriteResult AutoBlueprint::CompileAndSaveWidg
 	}
 
 	FSavePackageArgs SaveArgs;
+
 	SaveArgs.TopLevelFlags = RF_Public | RF_Standalone;
 	SaveArgs.SaveFlags = SAVE_NoError;
 	SaveArgs.Error = GWarn;

@@ -704,8 +704,7 @@
               "minimum": 0,
               "maximum": 1,
               "default": 1
-            },
-            "default": {}
+            }
           },
           "required": [],
           "additionalProperties": false,
@@ -771,8 +770,7 @@
               "minimum": 0,
               "maximum": 1,
               "default": 1
-            },
-            "default": {}
+            }
           },
           "required": [],
           "additionalProperties": false,
@@ -838,8 +836,7 @@
               "minimum": 0,
               "maximum": 1,
               "default": 1
-            },
-            "default": {}
+            }
           },
           "required": [],
           "additionalProperties": false,
@@ -905,8 +902,7 @@
               "minimum": 0,
               "maximum": 1,
               "default": 1
-            },
-            "default": {}
+            }
           },
           "required": [],
           "additionalProperties": false,
@@ -991,8 +987,7 @@
                 1,
                 1
               ]
-            },
-            "default": {}
+            }
           },
           "required": [],
           "additionalProperties": false,
@@ -1068,8 +1063,7 @@
               "type": "number",
               "minimum": 0,
               "maximum": 16384
-            },
-            "default": {}
+            }
           },
           "required": [],
           "additionalProperties": false,
@@ -1163,8 +1157,7 @@
               "minimum": 0.001,
               "maximum": 1000,
               "default": 1
-            },
-            "default": {}
+            }
           },
           "required": [],
           "additionalProperties": false,
@@ -1253,8 +1246,7 @@
               },
               "required": [],
               "additionalProperties": false
-            },
-            "default": {}
+            }
           },
           "required": [],
           "additionalProperties": false,
@@ -1323,8 +1315,7 @@
             },
             "brush": {
               "$ref": "#/$defs/brush"
-            },
-            "default": {}
+            }
           },
           "required": [],
           "additionalProperties": false,
@@ -1434,8 +1425,7 @@
             "auto_wrap_text": {
               "type": "boolean",
               "default": false
-            },
-            "default": {}
+            }
           },
           "required": [],
           "additionalProperties": false,
@@ -1515,8 +1505,7 @@
                 0,
                 0
               ]
-            },
-            "default": {}
+            }
           },
           "required": [],
           "additionalProperties": false,
