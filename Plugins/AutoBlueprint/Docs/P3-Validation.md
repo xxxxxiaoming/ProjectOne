@@ -175,3 +175,14 @@ lua Plugins/AutoBlueprint/Scripts/Tests/p3_sdk_test.lua
 6. 在 PIE/SIE 中尝试生成另一个新名称，应该拒绝且不产生目标；停止 Play 后同一布局应可执行。
 
 已知边界：纯文本采用 culture-invariant 文本，不创建本地化资源；未指定字体时使用原生默认字体，不保证中文覆盖。报告不是批量任务记录。生成类仅继承原生 UUserWidget，控件均为原生 UMG；完整 cook/打包与视觉验收仍按后续阶段执行。
+
+## 6 2026-11-17 首次编译反馈修复
+
+用户本地 UE 5.3.2 编译在 P3 测试代码中发现两处兼容问题：
+
+| 报错位置 | 原因与修复 |
+| --- | --- |
+| TreeAndVariables：GetJustification / TestTrue | UE 5.3.2 的 UTextBlock 没有 GetJustification；原表达式无效，继而产生 TestTrue 参数错误。改为通过 FByteProperty 读取已序列化的 Justification 枚举，先断言字段存在，再检查是否为 Right；保留对齐结果验证。 |
+| SaveReloadAndConflict：CreateWidget | 原调用把 GeneratedClass 的 TObjectPtr<UClass> 直接传给要求 TSubclassOf<UUserWidget> 的参数，无法匹配重载。改为先 Get() 取出类指针，显式构造 TSubclassOf<UUserWidget>，再调用 CreateWidget；并检查编辑器 World 有效。 |
+
+本次只修改自动化测试及本节记录，生成器实现不变。云端完成源码、CRLF 和差异检查；没有 UE 环境，修复后的实际编译及自动化仍待用户本地验证，第 5 节状态不改为通过。

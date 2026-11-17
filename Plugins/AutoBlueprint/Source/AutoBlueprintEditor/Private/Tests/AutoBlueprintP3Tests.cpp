@@ -31,6 +31,7 @@
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
+#include "Templates/SubclassOf.h"
 #include "UObject/Package.h"
 #include "UObject/StrongObjectPtr.h"
 #include "UObject/UnrealType.h"
@@ -245,9 +246,17 @@ bool FAutoBlueprintP3TreeTest::RunTest(const FString& Parameters)
 		TestFalse(TEXT("Enabled property"), Solo->GetIsEnabled());
 		TestEqual(TEXT("Render opacity"), Solo->GetRenderOpacity(), 0.5f);
 		TestEqual(TEXT("Normalized default font size"), Solo->GetFont().Size, 24);
-		TestTrue(TEXT("Text alignment"), Solo->GetJustification() == ETextJustify::Right);
 		TestTrue(TEXT("Text wrapping"), Solo->GetAutoWrapText());
 		TestNull(TEXT("A root has no parent slot"), static_cast<UPanelSlot*>(Solo->Slot));
+
+		// UE 5.3 exposes SetJustification but no matching getter; inspect the serialized enum.
+		const FByteProperty* JustificationProperty = FindFProperty<FByteProperty>(Solo->GetClass(), TEXT("Justification"));
+
+		if (TestNotNull(TEXT("Text justification property exists"), JustificationProperty))
+		{
+			TestEqual(TEXT("Text alignment"), JustificationProperty->GetPropertyValue_InContainer(Solo),
+				static_cast<uint8>(ETextJustify::Right));
+		}
 	}
 
 	return true;
@@ -393,7 +402,15 @@ bool FAutoBlueprintP3PersistenceTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("Original file remains byte-for-byte unchanged by rejected build"), FFileHelper::LoadFileToArray(After, *Filename) && Before == After);
 
 	UWorld* World = GEditor->GetEditorWorldContext().World();
-	TStrongObjectPtr<UUserWidget> Instance(CreateWidget<UUserWidget>(World, Reloaded->GeneratedClass));
+
+	if (!TestNotNull(TEXT("Editor world exists for instantiation"), World))
+	{
+		return false;
+	}
+
+	// Materialize the class argument explicitly instead of chaining TObjectPtr and TSubclassOf conversions.
+	const TSubclassOf<UUserWidget> WidgetClass(Reloaded->GeneratedClass.Get());
+	TStrongObjectPtr<UUserWidget> Instance(CreateWidget<UUserWidget>(World, WidgetClass));
 
 	TestNotNull(TEXT("Reloaded class can instantiate in editor world"), Instance.Get());
 	if (Instance.IsValid())
