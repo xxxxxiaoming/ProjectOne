@@ -186,3 +186,9 @@ lua Plugins/AutoBlueprint/Scripts/Tests/p3_sdk_test.lua
 | SaveReloadAndConflict：CreateWidget | 原调用把 GeneratedClass 的 TObjectPtr<UClass> 直接传给要求 TSubclassOf<UUserWidget> 的参数，无法匹配重载。改为先 Get() 取出类指针，显式构造 TSubclassOf<UUserWidget>，再调用 CreateWidget；并检查编辑器 World 有效。 |
 
 本次只修改自动化测试及本节记录，生成器实现不变。云端完成源码、CRLF 和差异检查；没有 UE 环境，修复后的实际编译及自动化仍待用户本地验证，第 5 节状态不改为通过。
+
+## 7 2026-11-17 字号断言重载修复
+
+第二次编译反馈的两处 C2666 都来自字号断言：`FSlateFontInfo::Size` 是 float，而测试期望值写成了 int 字面量 `32`、`24`，导致 `FAutomationTestBase::TestEqual` 的多个重载之间出现歧义。改为同类型的 `32.0f`、`24.0f`，保留完整的浮点字号值，不把实际值转成整数，以免丢失小数后误判通过。
+
+同时核对本文件其余 TestEqual：子节点数量和 ZOrder 为整数比较，RenderOpacity 两侧均为 float，反射对齐值两侧均为 uint8，其余为同类型的 FString、FName、枚举或 bool。源码与差异检查通过；此处修复不代表 UE 编译通过，仍需本地重新编译并运行 P3 测试。

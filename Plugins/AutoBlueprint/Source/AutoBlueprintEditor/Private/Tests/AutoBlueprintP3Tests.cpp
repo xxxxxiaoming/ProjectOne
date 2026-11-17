@@ -128,7 +128,7 @@ namespace AutoBlueprintP3Tests
 		Test.TestTrue(TEXT("Configured child order"), Root->GetChildAt(0) == Title && Root->GetChildAt(1) == Button);
 		Test.TestTrue(TEXT("Button owns label"), Button->GetContent() == Label);
 		Test.TestEqual(TEXT("Title is configuration text"), Title->GetText().ToString(), FString(TEXT("P3 JSON layout")));
-		Test.TestEqual(TEXT("Font size"), Title->GetFont().Size, 32);
+		Test.TestEqual(TEXT("Font size"), Title->GetFont().Size, 32.0f);
 		Test.TestTrue(TEXT("Linear text color"), Title->GetColorAndOpacity().GetSpecifiedColor().Equals(FLinearColor(0.2f, 0.8f, 1.0f, 1.0f)));
 		Test.TestEqual(TEXT("Title visibility"), Title->GetVisibility(), ESlateVisibility::HitTestInvisible);
 		Test.TestTrue(TEXT("Explicit variable flags"), !Root->bIsVariable && Title->bIsVariable && Button->bIsVariable && !Label->bIsVariable);
@@ -245,7 +245,7 @@ bool FAutoBlueprintP3TreeTest::RunTest(const FString& Parameters)
 		TestEqual(TEXT("JSON text is preserved"), Solo->GetText().ToString(), SpecialText);
 		TestFalse(TEXT("Enabled property"), Solo->GetIsEnabled());
 		TestEqual(TEXT("Render opacity"), Solo->GetRenderOpacity(), 0.5f);
-		TestEqual(TEXT("Normalized default font size"), Solo->GetFont().Size, 24);
+		TestEqual(TEXT("Normalized default font size"), Solo->GetFont().Size, 24.0f);
 		TestTrue(TEXT("Text wrapping"), Solo->GetAutoWrapText());
 		TestNull(TEXT("A root has no parent slot"), static_cast<UPanelSlot*>(Solo->Slot));
 
