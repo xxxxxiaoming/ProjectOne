@@ -1,6 +1,6 @@
 # P2 布局协议与只读校验
 
-实现完成，UE 5.3.2 Win64 编译、反射及 UE 自动化待用户本地验证。P1（含控制台引号修复）的通过记录保留。本阶段不创建、导入、编译或保存资产；通用生成属于 P3，资源实际导入属于 P4，GenerateBatch 仍返回 NOT_IMPLEMENTED。
+P2 实现及本地验收已完成：UE 5.3.2 Win64 编译/UHT、P2 自动化、P1/P0 回归，以及真资源检查、未写入证明和 Lua 真实反射均已由用户本地验证通过，结果见第 5 节。P1（含控制台引号修复）的通过记录保留。本阶段不创建、导入、编译或保存资产；通用生成属于 P3，资源实际导入属于 P4，GenerateBatch 仍返回 NOT_IMPLEMENTED。
 
 ## 1 调用入口
 
@@ -122,7 +122,7 @@ Schema 描述字段结构、范围和默认值；C++ 读取同一份文件并执
 
 离线运行：`python Scripts/Tests/p2_schema_test.py`（从插件目录，需 jsonschema）；仓库根目录执行 `lua Plugins/AutoBlueprint/Scripts/Tests/p2_sdk_test.lua`。
 
-本地补充：用已有 Texture2D/UFont 测试复用；错误类、缺资源、LFS 指针、损坏图片、资源目标与 Widget 重名应失败。对已有磁盘 Widget 执行预检应返回 ASSET_ALREADY_EXISTS，前后文件时间/内容及包 Dirty 状态保持一致。未保存包保护由 ReadOnlyConflicts 覆盖。检查普通编辑状态调用和 PIE/SIE 拒绝；连续有效→无效→有效不残留状态。完整运行上述四项 P2、四项 P1、五项 P0 测试后再记录 UE 通过，不以 Schema/Lua 离线通过替代 UE 编译或资产验证。
+本地验收已通过（用户确认并提交第 5 节记录）：已有 Texture2D/UFont 复用，以及错误类型、缺资源、LFS 指针、损坏图片、资源目标与 Widget 重名检查符合预期；已有磁盘 Widget 的预检返回 ASSET_ALREADY_EXISTS，原文件内容和包 Dirty 状态保持一致。未保存包保护、普通编辑状态调用、PIE/SIE 拒绝、连续有效→无效→有效恢复，以及 Lua 真实反射均验证通过。四项 P2、四项 P1、五项 P0 UE 测试已通过；这些本地结果与前述 Schema/Lua 离线检查分别记录。
 
 ## 6 2026-11-12 编译反馈修复
 
@@ -130,4 +130,4 @@ Schema 描述字段结构、范围和默认值；C++ 读取同一份文件并执
 
 修复：分别命名为 AddLayoutValidationError、AddLayoutSchemaError；JSON 键栈改为 JsonObjectKeys，资源别名列表改为 ResourceAliases。保留 Unity Build、原诊断内容及校验行为。
 
-云端使用从源码提取的函数声明构造最小 C++ 编译检查：旧声明可复现歧义，新声明在两种合并顺序下通过；变量遮蔽检查以 -Wshadow -Werror 验证。另核对改动仅为命名和注释、CRLF 与差异格式。该检查不包含 UE 头文件，不替代 UE 5.3.2 编译；请 fetch 后重新编译，再执行第 1 节的自动化与手动验收。
+云端使用从源码提取的函数声明构造最小 C++ 编译检查：旧声明可复现歧义，新声明在两种合并顺序下通过；变量遮蔽检查以 -Wshadow -Werror 验证。另核对改动仅为命名和注释、CRLF 与差异格式。该最小检查不包含 UE 头文件，不替代 UE 5.3.2 编译；修复后的 UE 编译及第 1 节相关自动化、手动验收现已由用户本地验证通过，结果见第 5 节。
