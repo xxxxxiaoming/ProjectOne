@@ -127,6 +127,70 @@ struct AUTOBLUEPRINTEDITOR_API FAutoBlueprintBuildResult
 	TArray<FAutoBlueprintDiagnostic> Diagnostics;
 };
 
+/** One declared texture dependency. Reused assets are never saved or modified by this task. */
+USTRUCT(BlueprintType)
+struct AUTOBLUEPRINTEDITOR_API FAutoBlueprintResourceResult
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
+	FString Alias;
+
+	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
+	FString SourceFile;
+
+	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
+	FString TargetAssetPath;
+
+	/** Nonempty only if this task created the package, even if import subsequently failed. */
+	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
+	FString CreatedPackageName;
+
+	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
+	bool bAttempted = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
+	bool bReused = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
+	bool bImported = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
+	bool bSaved = false;
+
+	/** Reuse succeeded, or import and its requested save succeeded. Not a task success flag. */
+	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
+	bool bSuccess = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
+	TArray<FAutoBlueprintDiagnostic> Diagnostics;
+};
+
+/** One UI task, combining independent texture results with exactly one Widget result. */
+USTRUCT(BlueprintType)
+struct AUTOBLUEPRINTEDITOR_API FAutoBlueprintGenerationResult
+{
+	GENERATED_BODY()
+
+	/** True only if the Widget and every declared resource satisfy the requested operation. */
+	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
+	bool bSuccess = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
+	FAutoBlueprintBuildResult Widget;
+
+	/** Deterministic alias order; entries not reached after a failure have bAttempted=false. */
+	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
+	TArray<FAutoBlueprintResourceResult> Resources;
+
+	/** Task/preflight diagnostics. Widget and resource-specific diagnostics stay in their results. */
+	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
+	TArray<FAutoBlueprintDiagnostic> Diagnostics;
+
+	UPROPERTY(BlueprintReadOnly, Category = "AutoBlueprint")
+	FString ReportFilePath;
+};
+
 /** Reserved batch input. General layout requests belong to P2/P3; P0 uses fixed fixture requests. */
 USTRUCT(BlueprintType)
 struct AUTOBLUEPRINTEDITOR_API FAutoBlueprintBatchRequest

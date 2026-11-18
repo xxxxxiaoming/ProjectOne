@@ -155,6 +155,64 @@ FAutoBlueprintBuildResult UAutoBlueprintSubsystem::BuildFromLayoutFile(const FSt
 	return Result;
 }
 
+FAutoBlueprintGenerationResult UAutoBlueprintSubsystem::GenerateFromLayout(const FString& LayoutJson, const FAutoBlueprintBuildOptions& Options)
+{
+	FAutoBlueprintGenerationResult Result;
+	FString ContextCode;
+	FString ContextMessage;
+
+	if (!AutoBlueprint::CheckEditorContext(ContextCode, ContextMessage))
+	{
+		AddError(Result.Widget, *ContextCode, ContextMessage);
+		return Result;
+	}
+	if (!bAcceptScriptRequests || bBuildInProgress)
+	{
+		AddError(Result.Widget, TEXT("EDITOR_BUSY"), TEXT("An initialized, idle editor subsystem is required."));
+		return Result;
+	}
+
+	TGuardValue<bool> BuildGuard(bBuildInProgress, true);
+
+	Result = AutoBlueprint::GenerateLayoutBlueprint(LayoutJson, Options);
+	AutoBlueprint::WriteGenerationReport(Result, Options);
+	return Result;
+}
+
+FAutoBlueprintGenerationResult UAutoBlueprintSubsystem::GenerateFromLayoutFile(const FString& ProjectRelativePath, const FAutoBlueprintBuildOptions& Options)
+{
+	FAutoBlueprintGenerationResult Result;
+	FString ContextCode;
+	FString ContextMessage;
+
+	if (!AutoBlueprint::CheckEditorContext(ContextCode, ContextMessage))
+	{
+		AddError(Result.Widget, *ContextCode, ContextMessage);
+		return Result;
+	}
+	if (!bAcceptScriptRequests || bBuildInProgress)
+	{
+		AddError(Result.Widget, TEXT("EDITOR_BUSY"), TEXT("An initialized, idle editor subsystem is required."));
+		return Result;
+	}
+
+	TGuardValue<bool> BuildGuard(bBuildInProgress, true);
+	FAutoBlueprintValidationResult ReadResult;
+	FString Json;
+
+	if (AutoBlueprint::ReadLayoutFile(ProjectRelativePath, Json, ReadResult))
+	{
+		Result = AutoBlueprint::GenerateLayoutBlueprint(Json, Options);
+	}
+	else
+	{
+		Result.Diagnostics = MoveTemp(ReadResult.Diagnostics);
+	}
+
+	AutoBlueprint::WriteGenerationReport(Result, Options);
+	return Result;
+}
+
 FAutoBlueprintBatchBuildResult UAutoBlueprintSubsystem::GenerateBatch(const FAutoBlueprintBatchRequest& Request)
 {
 	// TODO: implement batch scheduling and aggregation after general layout requests are available.

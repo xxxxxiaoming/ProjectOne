@@ -1,6 +1,6 @@
 # AutoBlueprint 项目插件架构设计草案
 
-本方案用于在 ProjectOne 项目内实现 AutoBlueprint 编辑器插件：通过 Lua + UnLua 调用 C++ 编辑器核心，把经过审阅的 JSON 布局配置转换为标准 User Widget Blueprint `.uasset`，在 UMG Designer 中打开即可查看和编辑控件树。目标版本为 UE 5.3.2、UnLua 2.3.6，首版以 Win64 Editor 为验证基线。版本为 0.5 草案，更新日期 2026-11-17；P0/P1/P2 已由用户本地验证，P3 通用生成链路已实现、待本地编译与验收，见 P3-Validation.md。
+本方案用于在 ProjectOne 项目内实现 AutoBlueprint 编辑器插件：通过 Lua + UnLua 调用 C++ 编辑器核心，把经过审阅的 JSON 布局配置转换为标准 User Widget Blueprint `.uasset`，在 UMG Designer 中打开即可查看和编辑控件树。目标版本为 UE 5.3.2、UnLua 2.3.6，首版以 Win64 Editor 为验证基线。版本为 0.6 草案，更新日期 2026-11-18；P0/P1/P2/P3 已由用户本地验证，P4 资源与样式已实现、待本地编译与验收，见 P4-Validation.md。
 
 ## 1 范围与待确认项
 
@@ -14,7 +14,7 @@
 | 插件位置 | `ProjectOne/Plugins/AutoBlueprint/` |
 | 资产位置 | 项目 `/Game/UI/...`，对应 `ProjectOne/Content/UI/...` |
 | 重复生成 | 首版 CreateOnly；覆盖重建和保留人工修改的更新作为后续独立能力 |
-| 当前实现 | P0/P1/P2 已本地验证；P3 已实现待 UE 验证，详见 [P3 验证说明](P3-Validation.md) |
+| 当前实现 | P0/P1/P2/P3 已本地验证；P4 已实现待 UE 验证，详见 [P4 验证说明](P4-Validation.md) |
 
 这里的“直接可用”指蓝图能够成功编译、保存、重新打开、实例化并通过 `AddToViewport` 显示。原生按钮可呈现常规交互样式，点击之后的游戏业务行为由后续逻辑实现。
 
@@ -97,7 +97,7 @@ ProjectOne/
 └─ Saved/AutoBlueprint/Reports/
 ```
 
-架构、编码规范与计划集中在 `Plugins/AutoBlueprint/Docs/`，该目录现另有 P0 验证说明。上图为目标结构；P0/P1 已建立插件和 Lua 入口，P2 实现解析/校验与注册表，P3 接通统一构树及编译保存，实际文件职责见 P3-Validation.md；资源处理仍待 P4。Lua 工具脚本放在插件 `Scripts/Lua/` 下，由 EditorLuaRunner 显式加载；不放进项目默认会随游戏分发的 `Content/Script/`。项目专用布局配置放在 `UIBlueprintLayouts/` 并纳入版本控制；报告放在 Saved 下。业务 Widget 名称继续遵循现有 `WBP_CashierMain` 等约定。
+架构、编码规范与计划集中在 `Plugins/AutoBlueprint/Docs/`，该目录现另有 P0 验证说明。上图为目标结构；P0/P1 已建立插件和 Lua 入口，P2 实现解析/校验与注册表，P3 接通统一构树及编译保存，P4 接通资源导入和样式，文件职责及验收见 P3-Validation.md 与 P4-Validation.md。Lua 工具脚本放在插件 `Scripts/Lua/` 下，由 EditorLuaRunner 显式加载；不放进项目默认会随游戏分发的 `Content/Script/`。项目专用布局配置放在 `UIBlueprintLayouts/` 并纳入版本控制；报告放在 Saved 下。业务 Widget 名称继续遵循现有 `WBP_CashierMain` 等约定。
 
 ## 5 模块职责与依赖
 
@@ -319,7 +319,7 @@ P1 采用 Output Log 命令入口（`AutoBlueprint.Run`、`AutoBlueprint.Generat
 
 `require("examples.helper")` 仅发现 `Scripts/Lua/examples/helper.lua`，使用每任务缓存与循环依赖检测，不回退到游戏或原生模块搜索路径。脚本是可信项目工具，加载路径约束不构成不可信代码沙箱。脚本返回带 `run(arguments)` 的表，任务成功需返回 true。限制与示例见 [P1-Validation.md](P1-Validation.md)。
 
-C++ 核心仍由编辑器子系统提供 ValidateLayout 和 BuildWidgetBlueprint。面向 Lua 增加静态 UFUNCTION 门面 AutoBlueprintLibrary，提供文件入口并转调子系统。以下省略无关声明；真实声明以 Public 头文件为准。P3 反射和 UE 5.3.2 编译待本地验证。
+C++ 核心仍由编辑器子系统提供 ValidateLayout 和 BuildWidgetBlueprint。面向 Lua 增加静态 UFUNCTION 门面 AutoBlueprintLibrary，提供文件入口并转调子系统。以下省略无关声明；真实声明以 Public 头文件为准。P3 反射和 UE 5.3.2 编译已本地验证；P4 新接口待本地验证。
 
 ```cpp
 #pragma once
@@ -393,12 +393,12 @@ public:
 - `GenerateBatch(const FAutoBlueprintBatchRequest&)` 已预留为可反射调用的 TODO API。正常编辑上下文中返回批量级及逐项 `NOT_IMPLEMENTED`，不进行路径校验、创建、编译或保存；空请求也明确报错。每个请求保留对应的结果位置。
 - 批量汇总、停止/继续策略和批量布局请求仍待后续实现；汇总将由逐项结果计算。不得用空数组推断“全部保存”，也不承诺跨包回滚。
 
-这次调整属于 P0 C++/Lua API 的破坏性变更，旧的结果字段不保留别名；迁移说明见 [P0-Validation.md](P0-Validation.md)。布局 JSON 的 `schema_version` 未改变。P4 导入纹理会产生额外资源包，必须先独立设计资源导入结果与逐包记录，再由任务报告组合；不能改变单 UI 结果的 `bSaved` 含义。
+这次调整属于 P0 C++/Lua API 的破坏性变更，旧的结果字段不保留别名；迁移说明见 [P0-Validation.md](P0-Validation.md)。布局 JSON 的 `schema_version` 未改变。P4 已新增 `FAutoBlueprintResourceResult` 和 `FAutoBlueprintGenerationResult`：任务组合独立纹理结果与一个 Widget 结果，不改变单 UI 的 `bSaved` 含义；完整字段、兼容性和失败行为见 [P4-Validation.md](P4-Validation.md)。
 
 返回类型使用 USTRUCT/UENUM 和 UPROPERTY，使 UnLua 能读取结果。Lua 访问反射字段保留 C++ 实际名称，例如 `result.bSuccess` 和 `options.bSave`；JSON 与磁盘报告继续使用约定的 `lower_snake_case` 字段。验证可读取文件、检查已有资产与资源类型，但不创建、导入或保存资产；构建时重新校验，避免预检与执行间状态变化。
 
 ```lua
--- P3 用法：由 AutoBlueprint 的编辑器 Lua 入口执行；当前实现待 UE 本地验收。
+-- P3 用法：单 Widget 接口（不声明纹理资源）；P4 资源任务用新增接口。
 local layoutPath = "UIBlueprintLayouts/Cashier/main.layout.json"
 
 local function printDiagnostics(diagnostics)
@@ -444,7 +444,7 @@ print("Generated: " .. result.TargetAssetPath)
 
 5. **应用属性与编译。** 写入资源、样式和属性，标记 Blueprint 结构变更，再使用 UE 蓝图编译流程。任何编译错误都阻止目标 Widget 资产保存，警告进入报告。
 
-6. **保存与回报。** 单次 Widget 构建只保存其目标包，成功后该结果的 `bSaved=true`。未来 P4 的纹理导入由独立资源结果逐包记录，再按依赖关系与 Widget 结果组成任务报告；只有所有请求要求的步骤成功才可宣称整个任务成功。批量结果不存储含义模糊的 `bSaved`，不得把某一个包保存成功当成整个任务保存成功。
+6. **保存与回报。** 单次 Widget 构建只保存其目标包，成功后该结果的 `bSaved=true`。P4 先编译 Widget，再逐包保存新纹理，最后保存 Widget；纹理由独立结果记录，与 Widget 结果组成版本 2 任务报告；只有所有请求要求的步骤成功才可宣称整个任务成功。批量结果不存储含义模糊的 `bSaved`，不得把某一个包保存成功当成整个任务保存成功。
 
 7. **重新打开验收。** 从磁盘重新加载或在新的编辑器会话打开，验证树、资源、变量与运行时实例化，而不是只检查文件是否存在。
 
@@ -492,4 +492,11 @@ print("Generated: " .. result.TargetAssetPath)
 
 现有收银 UI 的 `ASSET_MAP.md`、`UMG_LAYOUT.md` 与交互稿作为布局和命名依据。其中整板 JPG 应作为参考，不能用一张整板图片代替可编辑控件树；缺少独立切图的区域需要补图，或在确认后用原生控件组合表达。
 
-版本 0.5 草案以 Lua + UnLua + C++ 编辑器核心为实施基线。首版使用 CreateOnly，业务事件绑定、覆盖重建及增量更新留作后续能力。P0 及结果重构已由用户验证；P1/P2 已本地验证；P3 已实现待本地验收，记录见 `P0-Validation.md` 至 `P3-Validation.md`。
+版本 0.6 草案以 Lua + UnLua + C++ 编辑器核心为实施基线。首版使用 CreateOnly，业务事件绑定、覆盖重建及增量更新留作后续能力。P0 及结果重构已由用户验证；P1/P2 已本地验证；P3 已本地验收通过；P4 已实现待本地验收，记录见 `P0-Validation.md` 至 `P4-Validation.md`。
+
+
+### P4 已实现的资源任务入口
+
+`GenerateFromLayout` / `GenerateFromLayoutFile` 返回一个 `FAutoBlueprintGenerationResult`，包含 Widget、Resources、任务 Diagnostics 和 ReportFilePath。Lua `generateTaskFromFile` 及 Console GenerateFromFile 使用该入口；原有 Build API 与 Lua `generateFromFile` 保持单 Widget 返回类型，非空资源清单会在写入前返回 RESOURCE_TASK_REQUIRED。GenerateBatch 仍为占位。
+
+`FResolvedResources` 在单次任务中缓存纹理和字体，通过 FGCObject 收集引用，覆盖导入、模板构建、编译、保存的生命周期。新纹理从再次校验的源字节交给 UTextureFactory 创建；CreateOnly 目标在创建前和保存前重查。复用资源不改设置、不保存；失败停止后续保存，不删除已创建或已保存对象。Image、字体和按钮样式通过注册表属性处理器接入，不另建生成管线。

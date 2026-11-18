@@ -32,7 +32,7 @@ namespace AutoBlueprint
 			if (!Type || !Type->bCanBuild)
 			{
 				AddDiagnostic(Diagnostics, Node, TEXT("BUILD_WIDGET_NOT_IMPLEMENTED"),
-					TEXT("P3 builds CanvasPanel, TextBlock and Button. This protocol type has no build handler yet."));
+					TEXT("P4 builds CanvasPanel, TextBlock, Button and Image. This protocol type has no build handler yet."));
 				return false;
 			}
 			if (Type->ValidateBuild && !Type->ValidateBuild(Node, Diagnostics))
@@ -52,7 +52,7 @@ namespace AutoBlueprint
 		}
 
 		UWidget* ConstructNode(UWidgetTree& Tree, const FLayoutNode& Node, UPanelWidget* Parent,
-			const FWidgetTypeDescriptor* ParentType, TArray<FAutoBlueprintDiagnostic>& Diagnostics)
+			const FWidgetTypeDescriptor* ParentType, const FResolvedResources& Resources, TArray<FAutoBlueprintDiagnostic>& Diagnostics)
 		{
 			const FWidgetTypeDescriptor* Type = FindWidgetType(Node.Type);
 			UWidget* Widget = Tree.ConstructWidget<UWidget>(Type->GetClass(), Node.Name);
@@ -82,14 +82,14 @@ namespace AutoBlueprint
 			ApplyCommonWidgetProperties(*Widget, Node);
 			if (Type->ApplyProperties)
 			{
-				Type->ApplyProperties(*Widget, Node);
+				Type->ApplyProperties(*Widget, Node, Resources);
 			}
 
 			UPanelWidget* Panel = Cast<UPanelWidget>(Widget);
 
 			for (const FLayoutNode& Child : Node.Children)
 			{
-				if (!Panel || !ConstructNode(Tree, Child, Panel, Type, Diagnostics))
+				if (!Panel || !ConstructNode(Tree, Child, Panel, Type, Resources, Diagnostics))
 				{
 					return nullptr;
 				}
@@ -101,20 +101,10 @@ namespace AutoBlueprint
 
 	bool ValidateLayoutBuildCapabilities(const FLayoutSpec& Layout, TArray<FAutoBlueprintDiagnostic>& Diagnostics)
 	{
-		if (!Layout.Resources.IsEmpty())
-		{
-			FAutoBlueprintDiagnostic& Diagnostic = Diagnostics.AddDefaulted_GetRef();
-
-			Diagnostic.Code = TEXT("BUILD_RESOURCES_NOT_IMPLEMENTED");
-			Diagnostic.JsonPath = TEXT("$.resources");
-			Diagnostic.Message = TEXT("Resource reuse/import belongs to P4. P3 requires an empty resource list.");
-			return false;
-		}
-
 		return WidgetTreeBuild::ValidateNode(Layout.Root, Diagnostics);
 	}
 
-	bool BuildLayoutWidgetTree(UWidgetBlueprint& Blueprint, const FLayoutSpec& Layout,
+	bool BuildLayoutWidgetTree(UWidgetBlueprint& Blueprint, const FLayoutSpec& Layout, const FResolvedResources& Resources,
 		TArray<FAutoBlueprintDiagnostic>& Diagnostics)
 	{
 		if (!Blueprint.WidgetTree)
@@ -128,6 +118,6 @@ namespace AutoBlueprint
 			return false;
 		}
 
-		return WidgetTreeBuild::ConstructNode(*Blueprint.WidgetTree, Layout.Root, nullptr, nullptr, Diagnostics) != nullptr;
+		return WidgetTreeBuild::ConstructNode(*Blueprint.WidgetTree, Layout.Root, nullptr, nullptr, Resources, Diagnostics) != nullptr;
 	}
 }

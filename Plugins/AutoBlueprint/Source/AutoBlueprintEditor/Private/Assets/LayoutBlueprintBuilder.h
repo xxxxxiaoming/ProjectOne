@@ -8,4 +8,5 @@ namespace AutoBlueprint
 	 * Revalidates input and build capabilities before creating any package.
 	 */
 	FAutoBlueprintBuildResult BuildLayoutBlueprint(const FString& Json, const FAutoBlueprintBuildOptions& Options);
+	FAutoBlueprintGenerationResult GenerateLayoutBlueprint(const FString& Json, const FAutoBlueprintBuildOptions& Options, bool bAllowResources = true);
 }

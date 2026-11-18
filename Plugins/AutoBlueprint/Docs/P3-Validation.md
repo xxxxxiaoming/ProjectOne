@@ -1,6 +1,6 @@
 # P3 JSON 生成、编译与持久化
 
-P3 实现完成，Schema、Lua 和源码检查已通过。**用户本地已通过 UE 5.3.2 编译、P0/P1/P2 回归、生成/Designer/同名保护及新会话验收；P3 五项自动化中三项通过、两项负例失败，尚未整体验收通过。** 第 5 节保留用户验证记录，第 8 节记录本次日志预期修复，修复后待本地重跑。开发基于远程 `7e6a71a`，保留 P2 已通过的本地记录。P3 首先生成 CanvasPanel、TextBlock、Button；P4 资源/样式、P5 其他容器与 GenerateBatch 没有提前实现。
+P3 已由用户本地验证通过，包括 UE 5.3.2 编译、五项自动化、P0/P1/P2 回归、Designer、同名保护及新会话验收；第 5 节为用户记录，远程确认提交为 `1bc8ceb`。第 6–8 节保留历史修复过程。P4 的新增能力和当前版本回归要求见 [P4-Validation.md](P4-Validation.md)。以下 P3 说明描述原阶段能力，后续资源任务接口不改变单 Widget 结果的含义。
 
 ## 1 编译与调用入口
 
@@ -12,7 +12,7 @@ AutoBlueprint.GenerateFromFile Plugins/AutoBlueprint/Examples/p3_minimal.layout.
 
 这条命令执行插件的 `generate_from_file.lua`：先只读校验文件，再调用 C++ 构建门面。C++ 会重新读取、校验布局及目标冲突；一次调用只生成一个 Widget Blueprint 和一个 Package。
 
-默认目标为 `/Game/UI/AutoBlueprintTests/WBP_P3_Example`。成功后应看到 Created asset、Saved package、Build report 和 Generated 日志。再次执行同一命令应报告 `ASSET_ALREADY_EXISTS`，不改变原资产。重试新布局时复制 JSON 到 `UIBlueprintLayouts/` 并修改 `asset.package_path`，使用新名称；不要通过删旧资产来掩盖冲突测试。
+默认目标为 `/Game/UI/AutoBlueprintTests/WBP_P3_Example`。成功后应看到 Created asset、Saved package 和 Generated 日志；P4 起 Console 使用 Generation report，原有单 Widget API 仍使用 Build report。再次执行同一命令应报告 `ASSET_ALREADY_EXISTS`，不改变原资产。重试新布局时复制 JSON 到 `UIBlueprintLayouts/` 并修改 `asset.package_path`，使用新名称；不要通过删旧资产来掩盖冲突测试。
 
 等价工具命令：
 
@@ -195,7 +195,7 @@ lua Plugins/AutoBlueprint/Scripts/Tests/p3_sdk_test.lua
 
 ## 8 2026-11-18 负例测试日志预期修复
 
-基于用户验收提交 `7063381` 和本地截图，P3 的 PreflightNoWrites、SaveReloadAndConflict、TreeAndVariables 已通过；以下两项的失败原因在测试对日志的处理。截图未显示构建结果断言失败，但仍需重跑确认修复后的整体结果。
+基于用户验收提交 `7063381` 和本地截图，P3 的 PreflightNoWrites、SaveReloadAndConflict、TreeAndVariables 已通过；以下两项的失败原因在测试对日志的处理。截图未显示构建结果断言失败，此后用户已在 `1bc8ceb` 中确认全部通过。
 
 | 测试 | 失败原因 | 本次修复 |
 | --- | --- | --- |
@@ -204,13 +204,13 @@ lua Plugins/AutoBlueprint/Scripts/Tests/p3_sdk_test.lua
 
 本次没有关闭全局错误检测，也没有忽略所有文件保存错误。其他目标文件的错误、其他类型的错误和断言失败仍应导致测试失败。日志匹配以当前 UE 5.3.2 Win64 验证场景为依据，兼容路径中的正斜杠或反斜杠。
 
-云端检查：使用示例日志验证正则可匹配四种预期消息，拒绝不同 GUID、其他目标文件及无关错误；核对所有原有结果断言未改变，CRLF 和差异检查通过。云端未运行 UE，第 5 节已有 ✅ 保留，两项失败不改为通过。
+云端检查：使用示例日志验证正则可匹配四种预期消息，拒绝不同 GUID、其他目标文件及无关错误；核对所有原有结果断言未改变，CRLF 和差异检查通过。当时云端未运行 UE；此后用户已完成本地重跑，第 5 节两项均已通过。
 
-本地编译后优先重跑：
+历史修复的针对性重跑命令：
 
 ```text
 Automation RunTests AutoBlueprint.P3.CompileFailureDoesNotSave
 Automation RunTests AutoBlueprint.P3.FileLuaAndSaveFailure
 ```
 
-两项都应显示 Success；正常的预期日志可能显示为 Suppressed expected。随后运行 `Automation RunTests AutoBlueprint.P3` 确认整组通过，再更新第 5 节。
+用户已确认上述两项及整组通过。P4 抽取共享保存器后，目录被普通文件占据的情况会提前返回失败，不再产生移动文件错误，因此该用例同步移除对应日志预期；结果断言保留，详见 P4 第 3 节。

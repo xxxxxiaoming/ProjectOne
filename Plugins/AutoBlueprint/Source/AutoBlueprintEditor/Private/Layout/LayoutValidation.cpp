@@ -527,54 +527,11 @@ FAutoBlueprintValidationResult ValidateLayoutJson(const FString& Json, FLayoutSp
 
 				const bool bNew = NewPackage(Resource.PackagePath, P + TEXT(".package_path"), R);
 				FString Full;
-				const FString Extension = FPaths::GetExtension(Resource.SourceFile).ToLower();
+				TArray<uint8> Bytes;
 
-				// check texture source file's path & extension
-				if (!ProjectFile(Resource.SourceFile, TEXT("Content/UI"), Full) || (Extension != TEXT("png") && Extension != TEXT("jpg") && Extension != TEXT("jpeg")))
+				if (ReadValidatedSourceImage(Resource.SourceFile, P + TEXT(".source_file"), Full, Bytes, R) && bNew)
 				{
-					AddLayoutValidationError(R, TEXT("INVALID_SOURCE_PATH"), P + TEXT(".source_file"), TEXT("Expected PNG/JPG below Content/UI."));
-				}
-				else
-				{
-					TArray<uint8> Bytes;
-
-					if (!ReadBounded(Full, 32 * 1024 * 1024, Bytes) || Bytes.IsEmpty())
-					{
-						AddLayoutValidationError(R, TEXT("MISSING_RESOURCE"), P + TEXT(".source_file"), TEXT("Image missing, unreadable, empty, or exceeds 32 MiB."));
-					}
-					else
-					{
-						const ANSICHAR* Lfs = "version https://git-lfs.github.com/spec/v1";
-						if (Bytes.Num() >= FCStringAnsi::Strlen(Lfs) && FMemory::Memcmp(Bytes.GetData(), Lfs, FCStringAnsi::Strlen(Lfs)) == 0)
-						{
-							AddLayoutValidationError(R, TEXT("LFS_SOURCE_NOT_MATERIALIZED"), P + TEXT(".source_file"), TEXT("Download the Git LFS image first."));
-						}
-						else
-						{
-							IImageWrapperModule& Images = FModuleManager::LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
-							const EImageFormat Format = Images.DetectImageFormat(Bytes.GetData(), Bytes.Num());
-							TSharedPtr<IImageWrapper> Image;
-
-							if (Format == EImageFormat::PNG || Format == EImageFormat::JPEG)
-							{
-								Image = Images.CreateImageWrapper(Format);
-							}
-
-							TArray64<uint8> Pixels;
-
-							if ((Format != EImageFormat::PNG && Format != EImageFormat::JPEG) || !Image.IsValid()
-								|| !Image->SetCompressed(Bytes.GetData(), Bytes.Num()) || Image->GetWidth() <= 0 || Image->GetHeight() <= 0
-								|| static_cast<int64>(Image->GetWidth()) * Image->GetHeight() > 16 * 1024 * 1024
-								|| !Image->GetRaw(ERGBFormat::BGRA, 8, Pixels))
-							{
-								AddLayoutValidationError(R, TEXT("INVALID_IMAGE"), P + TEXT(".source_file"), TEXT("Image cannot be decoded or exceeds 16 megapixels."));
-							}
-							else if (bNew)
-							{
-								R.PlannedImports.Add(Resource.PackagePath);
-							}
-						}
-					}
+					R.PlannedImports.Add(Resource.PackagePath);
 				}
 			}
 
@@ -595,4 +552,52 @@ FAutoBlueprintValidationResult ValidateLayoutJson(const FString& Json, FLayoutSp
 
 	return R;
 }
+
+bool ReadValidatedSourceImage(const FString& RelativePath, const FString& JsonPath, FString& Full,
+	TArray<uint8>& Bytes, FAutoBlueprintValidationResult& Result)
+{
+	const FString Extension = FPaths::GetExtension(RelativePath).ToLower();
+
+	Bytes.Reset();
+	if (!ProjectFile(RelativePath, TEXT("Content/UI"), Full)
+		|| (Extension != TEXT("png") && Extension != TEXT("jpg") && Extension != TEXT("jpeg")))
+	{
+		AddLayoutValidationError(Result, TEXT("INVALID_SOURCE_PATH"), JsonPath, TEXT("Expected PNG/JPG below Content/UI."));
+		return false;
+	}
+	if (!ReadBounded(Full, 32 * 1024 * 1024, Bytes) || Bytes.IsEmpty())
+	{
+		AddLayoutValidationError(Result, TEXT("MISSING_RESOURCE"), JsonPath, TEXT("Image missing, unreadable, empty, or exceeds 32 MiB."));
+		return false;
+	}
+
+	const ANSICHAR* Lfs = "version https://git-lfs.github.com/spec/v1";
+
+	if (Bytes.Num() >= FCStringAnsi::Strlen(Lfs) && FMemory::Memcmp(Bytes.GetData(), Lfs, FCStringAnsi::Strlen(Lfs)) == 0)
+	{
+		AddLayoutValidationError(Result, TEXT("LFS_SOURCE_NOT_MATERIALIZED"), JsonPath, TEXT("Download the Git LFS image first."));
+		return false;
+	}
+
+	IImageWrapperModule& Images = FModuleManager::LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
+	const EImageFormat Format = Images.DetectImageFormat(Bytes.GetData(), Bytes.Num());
+	TSharedPtr<IImageWrapper> Image;
+	TArray64<uint8> Pixels;
+
+	if (Format == EImageFormat::PNG || Format == EImageFormat::JPEG)
+	{
+		Image = Images.CreateImageWrapper(Format);
+	}
+	if (!Image.IsValid() || !Image->SetCompressed(Bytes.GetData(), Bytes.Num())
+		|| Image->GetWidth() <= 0 || Image->GetHeight() <= 0
+		|| static_cast<int64>(Image->GetWidth()) * Image->GetHeight() > 16 * 1024 * 1024
+		|| !Image->GetRaw(ERGBFormat::BGRA, 8, Pixels))
+	{
+		AddLayoutValidationError(Result, TEXT("INVALID_IMAGE"), JsonPath, TEXT("Image cannot be decoded or exceeds 16 megapixels."));
+		return false;
+	}
+
+	return true;
+}
+
 }

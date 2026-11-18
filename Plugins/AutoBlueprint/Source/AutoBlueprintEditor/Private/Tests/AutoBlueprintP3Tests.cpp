@@ -297,8 +297,9 @@ bool FAutoBlueprintP3PreflightTest::RunTest(const FString& Parameters)
 		}
 		else if (Case == 1)
 		{
-			Button->GetObjectField(TEXT("properties"))->SetObjectField(TEXT("style"), MakeShared<FJsonObject>());
-			ExpectedCode = TEXT("BUILD_PROPERTY_NOT_IMPLEMENTED");
+			Root->SetStringField(TEXT("type"), TEXT("SizeBox"));
+			Root->SetArrayField(TEXT("children"), TArray<TSharedPtr<FJsonValue>>());
+			ExpectedCode = TEXT("BUILD_WIDGET_NOT_IMPLEMENTED");
 		}
 		else if (Case == 2)
 		{
@@ -491,14 +492,9 @@ bool FAutoBlueprintP3FileLuaTest::RunTest(const FString& Parameters)
 
 	Input->GetObjectField(TEXT("asset"))->SetStringField(TEXT("package_path"), FailedPackage);
 
-	// The intentional Win64 save failure logs retries plus move/save errors. Match only this
-	// fixture's destination, not all file errors or all messages containing the package name.
-	const FString ExpectedSaveFailure = TEXT("(MoveFile was unable to move|Error moving file|Failed to move|Error saving).*P3_Block_")
-		+ Id + TEXT("[/\\\\]WBP_SaveFailure[.]uasset");
+	// P4's shared saver detects a file occupying the directory before SavePackage.
+	// No engine move/save error should be emitted; retain all failure-state assertions.
 	FAutoBlueprintBuildOptions Options;
-
-	// Retry counts vary; zero requires at least one matching warning/error, with no upper limit.
-	AddExpectedError(ExpectedSaveFailure, EAutomationExpectedErrorFlags::Contains, 0);
 
 	const FAutoBlueprintBuildResult Failed = UAutoBlueprintLibrary::BuildWidgetBlueprint(AutoBlueprintP3Tests::Serialize(Input), Options);
 

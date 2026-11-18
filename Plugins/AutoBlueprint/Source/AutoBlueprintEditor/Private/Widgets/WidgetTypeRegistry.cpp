@@ -26,9 +26,9 @@ namespace AutoBlueprint
 			{ TEXT("Border"), TEXT("Border"), EChildPolicy::Single, &UBorder::StaticClass },
 			{ TEXT("SizeBox"), TEXT("SizeBox"), EChildPolicy::Single, &USizeBox::StaticClass },
 			{ TEXT("ScaleBox"), TEXT("ScaleBox"), EChildPolicy::Single, &UScaleBox::StaticClass },
-			{ TEXT("Button"), TEXT("Button"), EChildPolicy::Single, &UButton::StaticClass, true, &ValidateBasicButtonBuild, &ApplyBasicButtonProperties, &ApplyButtonChildSlot },
-			{ TEXT("Image"), TEXT(""), EChildPolicy::Leaf, &UImage::StaticClass },
-			{ TEXT("TextBlock"), TEXT(""), EChildPolicy::Leaf, &UTextBlock::StaticClass, true, &ValidateBasicTextBuild, &ApplyBasicTextProperties, nullptr },
+			{ TEXT("Button"), TEXT("Button"), EChildPolicy::Single, &UButton::StaticClass, true, nullptr, &ApplyBasicButtonProperties, &ApplyButtonChildSlot },
+			{ TEXT("Image"), TEXT(""), EChildPolicy::Leaf, &UImage::StaticClass, true, nullptr, &ApplyImageProperties, nullptr },
+			{ TEXT("TextBlock"), TEXT(""), EChildPolicy::Leaf, &UTextBlock::StaticClass, true, nullptr, &ApplyBasicTextProperties, nullptr },
 			{ TEXT("Spacer"), TEXT(""), EChildPolicy::Leaf, &USpacer::StaticClass },
 		};
 

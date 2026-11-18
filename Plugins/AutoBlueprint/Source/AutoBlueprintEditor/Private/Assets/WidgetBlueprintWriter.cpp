@@ -1,19 +1,14 @@
 #include "Assets/WidgetBlueprintWriter.h"
 
-#include "AutoBlueprintLog.h"
+#include "Assets/CreateOnlyAssetWriter.h"
 #include "Blueprint/UserWidget.h"
 #include "AutoBlueprintTypes.h"
 #include "Engine/Blueprint.h"
-#include "HAL/FileManager.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Kismet2/CompilerResultsLog.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "Logging/TokenizedMessage.h"
-#include "Misc/FeedbackContext.h"
-#include "Misc/PackageName.h"
-#include "Misc/Paths.h"
 #include "UObject/Package.h"
-#include "UObject/SavePackage.h"
 #include "WidgetBlueprint.h"
 
 namespace
@@ -91,41 +86,14 @@ AutoBlueprint::FAutoBlueprintWidgetWriteResult AutoBlueprint::CompileAndSaveWidg
 		return Result;
 	}
 
-	UPackage* Package = Blueprint.GetOutermost();
-	const FString PackageName = Package->GetName();
-	FString Filename;
+	FString Code;
+	FString Message;
 
-	if (!FPackageName::TryConvertLongPackageNameToFilename(PackageName, Filename, FPackageName::GetAssetPackageExtension()))
+	Result.bSaved = SaveCreatedAsset(Blueprint, Code, Message);
+	if (!Result.bSaved)
 	{
-		AddWriterError(Result, Blueprint, TEXT("INVALID_PACKAGE_PATH"), TEXT("Cannot resolve the package to a project asset filename."));
-		return Result;
+		AddWriterError(Result, Blueprint, *Code, Message);
 	}
 
-	// Recheck after compilation as editor callbacks may have created a disk asset.
-	if (FPackageName::DoesPackageExist(PackageName) || IFileManager::Get().FileExists(*Filename))
-	{
-		AddWriterError(Result, Blueprint, TEXT("ASSET_ALREADY_EXISTS"), TEXT("A disk asset appeared before saving. CreateOnly refuses to replace it."));
-		return Result;
-	}
-	if (!IFileManager::Get().MakeDirectory(*FPaths::GetPath(Filename), true))
-	{
-		AddWriterError(Result, Blueprint, TEXT("PACKAGE_SAVE_FAILED"), TEXT("Cannot create the target asset directory: ") + FPaths::GetPath(Filename));
-		return Result;
-	}
-
-	FSavePackageArgs SaveArgs;
-
-	SaveArgs.TopLevelFlags = RF_Public | RF_Standalone;
-	SaveArgs.SaveFlags = SAVE_NoError;
-	SaveArgs.Error = GWarn;
-	if (!UPackage::SavePackage(Package, &Blueprint, *Filename, SaveArgs))
-	{
-		AddWriterError(Result, Blueprint, TEXT("PACKAGE_SAVE_FAILED"), TEXT("Unreal failed to save the new package: ") + Filename);
-		return Result;
-	}
-
-	Result.bSaved = true;
-	// Preserve this evidence even if the calling Lua script throws after the save.
-	UE_LOG(LogAutoBlueprint, Log, TEXT("Saved package: %s"), *PackageName);
 	return Result;
 }

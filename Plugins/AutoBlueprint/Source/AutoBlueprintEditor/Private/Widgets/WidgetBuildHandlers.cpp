@@ -1,10 +1,16 @@
 #include "Widgets/WidgetBuildHandlers.h"
 
 #include "AutoBlueprintTypes.h"
+#include "Assets/ResolvedResources.h"
+#include "Engine/Font.h"
+#include "Engine/Texture2D.h"
+#include "Components/Image.h"
 #include "Components/Button.h"
 #include "Components/ButtonSlot.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/TextBlock.h"
+#include "Styling/SlateBrush.h"
+#include "Styling/SlateTypes.h"
 #include "Components/Widget.h"
 #include "Layout/LayoutSpec.h"
 #include "Layout/Margin.h"
@@ -33,31 +39,24 @@ namespace AutoBlueprint
 				static_cast<float>(Value.Elements[2].Number), static_cast<float>(Value.Elements[3].Number));
 		}
 
-		bool RejectDeferredProperty(const FLayoutNode& Node, const TCHAR* Name, TArray<FAutoBlueprintDiagnostic>& Diagnostics)
+		FLinearColor Color(const FLayoutValue& Value)
 		{
-			if (!Node.Properties.Fields.Contains(Name))
-			{
-				return true;
-			}
-
-			FAutoBlueprintDiagnostic& Diagnostic = Diagnostics.AddDefaulted_GetRef();
-
-			Diagnostic.Code = TEXT("BUILD_PROPERTY_NOT_IMPLEMENTED");
-			Diagnostic.JsonPath = Node.JsonPath + TEXT(".properties.") + Name;
-			Diagnostic.WidgetName = Node.Name.ToString();
-			Diagnostic.Message = TEXT("This property is validated by the protocol but its asset/style builder belongs to P4.");
-			return false;
+			return FLinearColor(static_cast<float>(Value.Elements[0].Number), static_cast<float>(Value.Elements[1].Number),
+				static_cast<float>(Value.Elements[2].Number), static_cast<float>(Value.Elements[3].Number));
 		}
-	}
 
-	bool ValidateBasicTextBuild(const FLayoutNode& Node, TArray<FAutoBlueprintDiagnostic>& Diagnostics)
-	{
-		return WidgetBuildValues::RejectDeferredProperty(Node, TEXT("font"), Diagnostics);
-	}
+		FSlateBrush Brush(const FLayoutValue& Value, const FResolvedResources& Resources)
+		{
+			UTexture2D* Texture = Resources.GetTexture(Field(Value, TEXT("resource")).String);
+			FSlateBrush Result;
 
-	bool ValidateBasicButtonBuild(const FLayoutNode& Node, TArray<FAutoBlueprintDiagnostic>& Diagnostics)
-	{
-		return WidgetBuildValues::RejectDeferredProperty(Node, TEXT("style"), Diagnostics);
+			Result.SetResourceObject(Texture);
+			Result.ImageSize = FVector2D(Texture->GetSizeX(), Texture->GetSizeY());
+			Result.DrawAs = Field(Value, TEXT("draw_as")).String == TEXT("Box") ? ESlateBrushDrawType::Box : ESlateBrushDrawType::Image;
+			Result.Margin = Margin(Field(Value, TEXT("margin")));
+			Result.TintColor = FSlateColor(Color(Field(Value, TEXT("tint"))));
+			return Result;
+		}
 	}
 
 	void ApplyCommonWidgetProperties(UWidget& Widget, const FLayoutNode& Node)
@@ -89,7 +88,7 @@ namespace AutoBlueprint
 		Widget.SetRenderOpacity(static_cast<float>(WidgetBuildValues::Field(Properties, TEXT("render_opacity")).Number));
 	}
 
-	void ApplyBasicTextProperties(UWidget& Widget, const FLayoutNode& Node)
+	void ApplyBasicTextProperties(UWidget& Widget, const FLayoutNode& Node, const FResolvedResources& Resources)
 	{
 		UTextBlock& Text = *CastChecked<UTextBlock>(&Widget);
 		const FLayoutValue& Properties = Node.Properties;
@@ -97,8 +96,15 @@ namespace AutoBlueprint
 		const FString& Justification = WidgetBuildValues::Field(Properties, TEXT("justification")).String;
 		FSlateFontInfo Font = Text.GetFont();
 
-		// Keep the native default font; loading a configured font asset is a P4 capability.
-		Font.Size = static_cast<int32>(WidgetBuildValues::Field(Properties, TEXT("font_size")).Number);
+		const TSharedPtr<FLayoutValue>* FontPath = Properties.Fields.Find(TEXT("font"));
+
+		if (FontPath)
+		{
+			Font.FontObject = Resources.GetFont((*FontPath)->String);
+			Font.TypefaceFontName = NAME_None;
+		}
+
+		Font.Size = static_cast<float>(WidgetBuildValues::Field(Properties, TEXT("font_size")).Number);
 		Text.SetFont(Font);
 		Text.SetText(FText::AsCultureInvariant(WidgetBuildValues::Field(Properties, TEXT("text")).String));
 		Text.SetColorAndOpacity(FSlateColor(FLinearColor(static_cast<float>(Color.Elements[0].Number), static_cast<float>(Color.Elements[1].Number),
@@ -108,15 +114,48 @@ namespace AutoBlueprint
 		Text.SetAutoWrapText(WidgetBuildValues::Field(Properties, TEXT("auto_wrap_text")).bBoolean);
 	}
 
-	void ApplyBasicButtonProperties(UWidget& Widget, const FLayoutNode& Node)
+	void ApplyBasicButtonProperties(UWidget& Widget, const FLayoutNode& Node, const FResolvedResources& Resources)
 	{
 		UButton& Button = *CastChecked<UButton>(&Widget);
+
+		const TSharedPtr<FLayoutValue>* StyleValue = Node.Properties.Fields.Find(TEXT("style"));
+
+		if (StyleValue)
+		{
+			FButtonStyle Style = Button.GetStyle();
+			const FLayoutValue& Value = **StyleValue;
+			const TCHAR* Names[] = { TEXT("normal"), TEXT("hovered"), TEXT("pressed"), TEXT("disabled") };
+			FSlateBrush* Brushes[] = { &Style.Normal, &Style.Hovered, &Style.Pressed, &Style.Disabled };
+
+			for (int32 Index = 0; Index < UE_ARRAY_COUNT(Names); ++Index)
+			{
+				const TSharedPtr<FLayoutValue>* State = Value.Fields.Find(Names[Index]);
+
+				if (State)
+				{
+					*Brushes[Index] = WidgetBuildValues::Brush(**State, Resources);
+				}
+			}
+
+			Button.SetStyle(Style);
+		}
 
 		// UE 5.3 has no public UButton focus setter. Set the serialized template property
 		// before a Slate instance exists; this never edits a live preview button.
 		PRAGMA_DISABLE_DEPRECATION_WARNINGS
 		Button.IsFocusable = WidgetBuildValues::Field(Node.Properties, TEXT("is_focusable")).bBoolean;
 		PRAGMA_ENABLE_DEPRECATION_WARNINGS
+	}
+
+	void ApplyImageProperties(UWidget& Widget, const FLayoutNode& Node, const FResolvedResources& Resources)
+	{
+		UImage& Image = *CastChecked<UImage>(&Widget);
+		const TSharedPtr<FLayoutValue>* Value = Node.Properties.Fields.Find(TEXT("brush"));
+
+		if (Value)
+		{
+			Image.SetBrush(WidgetBuildValues::Brush(**Value, Resources));
+		}
 	}
 
 	bool ApplyCanvasChildSlot(UPanelSlot& Slot, const FLayoutValue& Values)

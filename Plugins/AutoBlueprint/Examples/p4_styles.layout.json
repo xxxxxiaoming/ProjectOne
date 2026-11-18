@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "asset": {
+    "package_path": "/Game/UI/AutoBlueprintTests/WBP_P4_Example"
+  },
+  "design": {
+    "width": 960,
+    "height": 640
+  },
+  "root": {
+    "name": "RootCanvas",
+    "type": "CanvasPanel",
+    "is_variable": false,
+    "children": [
+      {
+        "name": "TXT_Title",
+        "type": "TextBlock",
+        "is_variable": true,
+        "slot": {
+          "type": "Canvas",
+          "offsets": [
+            64,
+            80,
+            500,
+            60
+          ]
+        },
+        "properties": {
+          "text": "P4 资源与样式 / Styles",
+          "font_size": 32,
+          "color": [
+            0.2,
+            0.8,
+            1,
+            1
+          ],
+          "visibility": "HitTestInvisible"
+        }
+      },
+      {
+        "name": "IMG_Photo",
+        "type": "Image",
+        "is_variable": true,
+        "slot": {
+          "type": "Canvas",
+          "offsets": [
+            64,
+            180,
+            256,
+            192
+          ]
+        },
+        "properties": {
+          "render_opacity": 0.75,
+          "brush": {
+            "resource": "photo",
+            "draw_as": "Image",
+            "tint": [
+              1,
+              0.5,
+              0.25,
+              0.8
+            ]
+          }
+        }
+      },
+      {
+        "name": "BTN_Confirm",
+        "type": "Button",
+        "is_variable": true,
+        "slot": {
+          "type": "Canvas",
+          "offsets": [
+            64,
+            -80,
+            64,
+            64
+          ],
+          "anchors": {
+            "min": [
+              0,
+              1
+            ],
+            "max": [
+              1,
+              1
+            ]
+          },
+          "alignment": [
+            0,
+            1
+          ],
+          "z_order": 2
+        },
+        "children": [
+          {
+            "name": "TXT_Confirm",
+            "type": "TextBlock",
+            "is_variable": false,
+            "slot": {
+              "type": "Button",
+              "horizontal_alignment": "Center",
+              "vertical_alignment": "Center",
+              "padding": [
+                12,
+                8,
+                12,
+                8
+              ]
+            },
+            "properties": {
+              "text": "Confirm"
+            }
+          }
+        ],
+        "properties": {
+          "is_focusable": false,
+          "style": {
+            "normal": {
+              "resource": "button",
+              "draw_as": "Box",
+              "margin": [
+                0.25,
+                0.25,
+                0.25,
+                0.25
+              ],
+              "tint": [
+                1,
+                1,
+                1,
+                1
+              ]
+            },
+            "hovered": {
+              "resource": "button",
+              "draw_as": "Box",
+              "margin": [
+                0.25,
+                0.25,
+                0.25,
+                0.25
+              ],
+              "tint": [
+                0.5,
+                1,
+                0.5,
+                1
+              ]
+            },
+            "pressed": {
+              "resource": "button",
+              "draw_as": "Box",
+              "margin": [
+                0.25,
+                0.25,
+                0.25,
+                0.25
+              ],
+              "tint": [
+                0.5,
+                0.5,
+                1,
+                1
+              ]
+            },
+            "disabled": {
+              "resource": "button",
+              "draw_as": "Box",
+              "margin": [
+                0.25,
+                0.25,
+                0.25,
+                0.25
+              ],
+              "tint": [
+                0.25,
+                0.25,
+                0.25,
+                0.5
+              ]
+            }
+          }
+        }
+      }
+    ]
+  },
+  "resources": {
+    "button": {
+      "source_file": "Content/UI/AutoBlueprintTests/P4Fixtures/button.png",
+      "package_path": "/Game/UI/AutoBlueprintTests/T_P4_Button"
+    },
+    "photo": {
+      "source_file": "Content/UI/AutoBlueprintTests/P4Fixtures/photo.jpg",
+      "package_path": "/Game/UI/AutoBlueprintTests/T_P4_Photo"
+    }
+  }
+}

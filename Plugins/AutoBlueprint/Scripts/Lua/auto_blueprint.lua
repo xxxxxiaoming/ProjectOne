@@ -82,4 +82,53 @@ function module.generateFromFile(layoutPath, options)
     return module.reportBuildResult(result, options.bSave)
 end
 
+-- P4 task API: one Widget result plus independently reported texture dependencies.
+function module.reportGenerationResult(result, saveRequested)
+    assert(type(result.bSuccess) == "boolean", "task bSuccess must be a Lua boolean")
+    local messages = { formatDiagnostics(result.Diagnostics), formatDiagnostics(result.Widget.Diagnostics) }
+    for _, item in ipairs(result.Resources:ToTable()) do
+        assert(type(item.bAttempted) == "boolean" and type(item.bReused) == "boolean"
+            and type(item.bImported) == "boolean" and type(item.bSaved) == "boolean"
+            and type(item.bSuccess) == "boolean", "resource states must be Lua booleans")
+        assert(type(item.Alias) == "string" and type(item.TargetAssetPath) == "string"
+            and type(item.CreatedPackageName) == "string", "resource paths must be Lua strings")
+        local state = not item.bAttempted and "not attempted" or item.bReused and "reused"
+            or item.bSaved and "saved" or item.bImported and "imported, unsaved" or "failed"
+        print("Resource " .. item.Alias .. " [" .. state .. "]: " .. item.TargetAssetPath)
+        if item.CreatedPackageName ~= "" then
+            print((item.bSaved and "Saved package: " or "Unsaved package: ") .. item.CreatedPackageName)
+        end
+        messages[#messages + 1] = formatDiagnostics(item.Diagnostics)
+        if result.bSuccess then
+            assert(item.bSuccess and item.bAttempted, "successful task contains an incomplete resource")
+            assert(item.bReused ~= item.bImported, "resource must be reused or imported")
+            assert(item.bSaved == (item.bImported and saveRequested), "unexpected resource save state")
+        end
+    end
+    if result.ReportFilePath ~= "" then
+        print("Generation report: " .. result.ReportFilePath)
+    end
+    if not result.bSuccess then
+        if result.Widget.CreatedPackageName ~= "" then
+            print((result.Widget.bSaved and "Saved package: " or "Unsaved package: ") .. result.Widget.CreatedPackageName)
+        end
+        error("Generation task failed:\n" .. table.concat(messages, "\n"), 2)
+    end
+    module.reportBuildResult(result.Widget, saveRequested)
+    return result
+end
+
+function module.generateTaskFromFile(layoutPath, options)
+    assert(type(layoutPath) == "string" and layoutPath ~= "",
+        "INVALID_ARGUMENTS: expected a project-relative layout file path")
+    options = options or UE.FAutoBlueprintBuildOptions()
+    assert(type(options.bSave) == "boolean", "bSave must be a Lua boolean")
+    local validation = module.validateLayoutFile(layoutPath)
+    if not validation.bValid then
+        error("Layout validation failed:\n" .. formatDiagnostics(validation.Diagnostics), 2)
+    end
+    local result = UE.UAutoBlueprintLibrary.GenerateFromLayoutFile(layoutPath, options)
+    return module.reportGenerationResult(result, options.bSave)
+end
+
 return module

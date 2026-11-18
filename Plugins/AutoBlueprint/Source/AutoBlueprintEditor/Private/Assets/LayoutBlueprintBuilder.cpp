@@ -1,6 +1,8 @@
 #include "Assets/LayoutBlueprintBuilder.h"
 
 #include "Assets/WidgetBlueprintWriter.h"
+#include "Assets/CreateOnlyAssetWriter.h"
+#include "Assets/ResolvedResources.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Blueprint/UserWidget.h"
 #include "Blueprint/WidgetBlueprintGeneratedClass.h"
@@ -28,17 +30,30 @@ namespace AutoBlueprint
 		}
 	}
 
-	FAutoBlueprintBuildResult BuildLayoutBlueprint(const FString& Json, const FAutoBlueprintBuildOptions& Options)
+	FAutoBlueprintGenerationResult GenerateLayoutBlueprint(const FString& Json, const FAutoBlueprintBuildOptions& Options, bool bAllowResources)
 	{
 		FLayoutSpec Layout;
 		FAutoBlueprintValidationResult Validation = ValidateLayoutJson(Json, Layout);
-		FAutoBlueprintBuildResult Result;
+		FAutoBlueprintGenerationResult Task;
+		FAutoBlueprintBuildResult& Result = Task.Widget;
+		FResolvedResources Resources;
 
 		Result.TargetAssetPath = Validation.PlannedAssetPath;
 		Result.Diagnostics = MoveTemp(Validation.Diagnostics);
 		if (!Validation.bValid || !ValidateLayoutBuildCapabilities(Layout, Result.Diagnostics))
 		{
-			return Result;
+			return Task;
+		}
+
+		if (!bAllowResources && !Layout.Resources.IsEmpty())
+		{
+			LayoutBlueprintBuild::AddFailure(Result, TEXT("RESOURCE_TASK_REQUIRED"),
+				TEXT("Layouts with resources require GenerateFromLayout/GenerateFromLayoutFile, which report each resource separately."));
+			return Task;
+		}
+		if (!Resources.Resolve(Layout, Task, Options.bSave))
+		{
+			return Task;
 		}
 
 		// Resource loading during validation can invoke editor callbacks. Recheck immediately before creation.
@@ -48,7 +63,7 @@ namespace AutoBlueprint
 			|| IFileManager::Get().FileExists(*Filename))
 		{
 			LayoutBlueprintBuild::AddFailure(Result, TEXT("ASSET_ALREADY_EXISTS"), TEXT("The target appeared during validation. CreateOnly refuses to replace it."));
-			return Result;
+			return Task;
 		}
 
 		TStrongObjectPtr<UPackage> Package(CreatePackage(*Layout.PackagePath));
@@ -56,7 +71,7 @@ namespace AutoBlueprint
 		if (!Package.IsValid())
 		{
 			LayoutBlueprintBuild::AddFailure(Result, TEXT("ASSET_CREATE_FAILED"), TEXT("Cannot create the new package."));
-			return Result;
+			return Task;
 		}
 
 		Result.CreatedPackageName = Package->GetName();
@@ -69,7 +84,7 @@ namespace AutoBlueprint
 		if (!Blueprint.IsValid())
 		{
 			LayoutBlueprintBuild::AddFailure(Result, TEXT("ASSET_CREATE_FAILED"), TEXT("Unreal could not create the Widget Blueprint. The new package remains unsaved."));
-			return Result;
+			return Task;
 		}
 
 		Blueprint->SetFlags(RF_Public | RF_Standalone | RF_Transactional);
@@ -77,17 +92,50 @@ namespace AutoBlueprint
 		FAssetRegistryModule::AssetCreated(Blueprint.Get());
 		Blueprint->MarkPackageDirty();
 
-		if (!BuildLayoutWidgetTree(*Blueprint.Get(), Layout, Result.Diagnostics))
+		if (!BuildLayoutWidgetTree(*Blueprint.Get(), Layout, Resources, Result.Diagnostics))
 		{
-			return Result;
+			return Task;
 		}
 
-		FAutoBlueprintWidgetWriteResult WriteResult = CompileAndSaveWidgetBlueprint(*Blueprint.Get(), Options.bSave, &Layout.DesignSize);
+		FAutoBlueprintWidgetWriteResult WriteResult = CompileAndSaveWidgetBlueprint(*Blueprint.Get(), false, &Layout.DesignSize);
 
 		Result.bCompiled = WriteResult.bCompiled;
-		Result.bSaved = WriteResult.bSaved;
+
 		Result.Diagnostics.Append(MoveTemp(WriteResult.Diagnostics));
-		Result.bSuccess = Result.bCompiled && (!Options.bSave || Result.bSaved);
-		return Result;
+		if (!Result.bCompiled)
+		{
+			return Task;
+		}
+		if (Options.bSave)
+		{
+			// A Widget package must never be saved pointing at a new texture that failed to save.
+			if (!Resources.SaveImports(Task))
+			{
+				LayoutBlueprintBuild::AddFailure(Result, TEXT("RESOURCE_SAVE_FAILED"), TEXT("A texture could not be saved. The compiled Widget remains unsaved; inspect resource results."));
+				return Task;
+			}
+
+			FString Code;
+			FString Message;
+
+			Result.bSaved = SaveCreatedAsset(*Blueprint.Get(), Code, Message);
+			if (!Result.bSaved)
+			{
+				LayoutBlueprintBuild::AddFailure(Result, *Code, Message);
+				return Task;
+			}
+		}
+
+		Result.bSuccess = true;
+		Task.bSuccess = true;
+		return Task;
+	}
+
+	FAutoBlueprintBuildResult BuildLayoutBlueprint(const FString& Json, const FAutoBlueprintBuildOptions& Options)
+	{
+		FAutoBlueprintGenerationResult Task = GenerateLayoutBlueprint(Json, Options, false);
+
+		Task.Widget.Diagnostics.Append(MoveTemp(Task.Diagnostics));
+		return MoveTemp(Task.Widget);
 	}
 }

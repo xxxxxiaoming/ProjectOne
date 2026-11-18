@@ -13,7 +13,19 @@ class AUTOBLUEPRINTEDITOR_API UAutoBlueprintLibrary : public UBlueprintFunctionL
 	GENERATED_BODY()
 
 public:
+	/** P4 task API: revalidate, resolve/import textures, build one Widget and optionally save each new package.
+	 * Idle editor game thread only. CreateOnly; no overwrite, reimport, deletion or rollback.
+	 * bSave=false creates unsaved assets. Inspect independent results on partial failure.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "AutoBlueprint|Generation")
+	static FAutoBlueprintGenerationResult GenerateFromLayout(const FString& LayoutJson, const FAutoBlueprintBuildOptions& Options);
+
+	/** Same task contract; reads a JSON from the existing allowed project-relative layout directories. */
+	UFUNCTION(BlueprintCallable, Category = "AutoBlueprint|Generation")
+	static FAutoBlueprintGenerationResult GenerateFromLayoutFile(const FString& ProjectRelativePath, const FAutoBlueprintBuildOptions& Options);
+
 	/** Validate again, then create one native Widget Blueprint; never replaces an existing package.
+	 * Declared textures require GenerateFromLayout/GenerateFromLayoutFile and their separate resource results.
 	 * Editor game thread outside PIE/SIE only. Failed compilation never saves the Widget.
 	 * bSave=false still creates an in-memory asset. See result for partial creation and report path.
 	 */

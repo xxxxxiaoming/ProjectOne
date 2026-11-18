@@ -129,3 +129,33 @@ FAutoBlueprintBuildResult UAutoBlueprintLibrary::BuildFromLayoutFile(const FStri
 	Result.Diagnostics.Add(MoveTemp(Diagnostic));
 	return Result;
 }
+
+FAutoBlueprintGenerationResult UAutoBlueprintLibrary::GenerateFromLayout(const FString& LayoutJson, const FAutoBlueprintBuildOptions& Options)
+{
+	FAutoBlueprintDiagnostic Diagnostic;
+
+	if (UAutoBlueprintSubsystem* Subsystem = GetAvailableSubsystem(Diagnostic))
+	{
+		return Subsystem->GenerateFromLayout(LayoutJson, Options);
+	}
+
+	FAutoBlueprintGenerationResult Result;
+
+	Result.Diagnostics.Add(MoveTemp(Diagnostic));
+	return Result;
+}
+
+FAutoBlueprintGenerationResult UAutoBlueprintLibrary::GenerateFromLayoutFile(const FString& ProjectRelativePath, const FAutoBlueprintBuildOptions& Options)
+{
+	FAutoBlueprintDiagnostic Diagnostic;
+
+	if (UAutoBlueprintSubsystem* Subsystem = GetAvailableSubsystem(Diagnostic))
+	{
+		return Subsystem->GenerateFromLayoutFile(ProjectRelativePath, Options);
+	}
+
+	FAutoBlueprintGenerationResult Result;
+
+	Result.Diagnostics.Add(MoveTemp(Diagnostic));
+	return Result;
+}

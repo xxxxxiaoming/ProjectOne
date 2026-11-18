@@ -9,6 +9,7 @@ struct FAutoBlueprintDiagnostic;
 
 namespace AutoBlueprint
 {
+	class FResolvedResources;
 	struct FLayoutNode;
 	struct FLayoutValue;
 
@@ -28,7 +29,7 @@ namespace AutoBlueprint
 		UClass* (*GetClass)();
 		bool bCanBuild = false;
 		bool (*ValidateBuild)(const FLayoutNode&, TArray<FAutoBlueprintDiagnostic>&) = nullptr;
-		void (*ApplyProperties)(UWidget&, const FLayoutNode&) = nullptr;
+		void (*ApplyProperties)(UWidget&, const FLayoutNode&, const FResolvedResources&) = nullptr;
 		bool (*ApplyChildSlot)(UPanelSlot&, const FLayoutValue&) = nullptr;
 	};
 
