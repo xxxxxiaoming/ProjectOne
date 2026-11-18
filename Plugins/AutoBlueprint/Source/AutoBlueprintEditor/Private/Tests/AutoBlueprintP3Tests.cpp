@@ -491,7 +491,15 @@ bool FAutoBlueprintP3FileLuaTest::RunTest(const FString& Parameters)
 
 	Input->GetObjectField(TEXT("asset"))->SetStringField(TEXT("package_path"), FailedPackage);
 
+	// The intentional Win64 save failure logs retries plus move/save errors. Match only this
+	// fixture's destination, not all file errors or all messages containing the package name.
+	const FString ExpectedSaveFailure = TEXT("(MoveFile was unable to move|Error moving file|Failed to move|Error saving).*P3_Block_")
+		+ Id + TEXT("[/\\\\]WBP_SaveFailure[.]uasset");
 	FAutoBlueprintBuildOptions Options;
+
+	// Retry counts vary; zero requires at least one matching warning/error, with no upper limit.
+	AddExpectedError(ExpectedSaveFailure, EAutomationExpectedErrorFlags::Contains, 0);
+
 	const FAutoBlueprintBuildResult Failed = UAutoBlueprintLibrary::BuildWidgetBlueprint(AutoBlueprintP3Tests::Serialize(Input), Options);
 
 	ON_SCOPE_EXIT
@@ -532,9 +540,9 @@ bool FAutoBlueprintP3CompileFailureTest::RunTest(const FString& Parameters)
 	Root->SetBoolField(TEXT("is_variable"), true);
 	Input->SetObjectField(TEXT("root"), Root);
 
-	// Structural marking may log the deliberate native-member collision during skeleton compilation.
+	// UE 5.3 logs the native-member collision with Slot, but need not include the package path.
+	// Occurrences=0 requires one or more matches; it does not make an expectation optional.
 	AddExpectedError(TEXT("Slot"), EAutomationExpectedErrorFlags::Contains, 0);
-	AddExpectedError(PackagePath, EAutomationExpectedErrorFlags::Contains, 0);
 
 	const FAutoBlueprintBuildResult Result = UAutoBlueprintLibrary::BuildWidgetBlueprint(AutoBlueprintP3Tests::Serialize(Input), Options);
 

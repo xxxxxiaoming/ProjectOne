@@ -1,6 +1,6 @@
 # P3 JSON 生成、编译与持久化
 
-P3 实现完成，当前环境的 Schema、Lua 和源码检查已通过；**UE 5.3.2 编译、自动化及新会话验收尚未执行，等待用户本地验证**。开发基于远程 `7e6a71a`，保留 P2 已通过的本地记录。P3 首先生成 CanvasPanel、TextBlock、Button；P4 资源/样式、P5 其他容器与 GenerateBatch 没有提前实现。
+P3 实现完成，Schema、Lua 和源码检查已通过。**用户本地已通过 UE 5.3.2 编译、P0/P1/P2 回归、生成/Designer/同名保护及新会话验收；P3 五项自动化中三项通过、两项负例失败，尚未整体验收通过。** 第 5 节保留用户验证记录，第 8 节记录本次日志预期修复，修复后待本地重跑。开发基于远程 `7e6a71a`，保留 P2 已通过的本地记录。P3 首先生成 CanvasPanel、TextBlock、Button；P4 资源/样式、P5 其他容器与 GenerateBatch 没有提前实现。
 
 ## 1 编译与调用入口
 
@@ -185,10 +185,32 @@ lua Plugins/AutoBlueprint/Scripts/Tests/p3_sdk_test.lua
 | TreeAndVariables：GetJustification / TestTrue | UE 5.3.2 的 UTextBlock 没有 GetJustification；原表达式无效，继而产生 TestTrue 参数错误。改为通过 FByteProperty 读取已序列化的 Justification 枚举，先断言字段存在，再检查是否为 Right；保留对齐结果验证。 |
 | SaveReloadAndConflict：CreateWidget | 原调用把 GeneratedClass 的 TObjectPtr<UClass> 直接传给要求 TSubclassOf<UUserWidget> 的参数，无法匹配重载。改为先 Get() 取出类指针，显式构造 TSubclassOf<UUserWidget>，再调用 CreateWidget；并检查编辑器 World 有效。 |
 
-本次只修改自动化测试及本节记录，生成器实现不变。云端完成源码、CRLF 和差异检查；没有 UE 环境，修复后的实际编译及自动化仍待用户本地验证，第 5 节状态不改为通过。
+本次只修改自动化测试及本节记录，生成器实现不变。云端完成源码、CRLF 和差异检查；此后用户已确认实际编译通过，P3 自动化的剩余问题见第 5、8 节。
 
 ## 7 2026-11-17 字号断言重载修复
 
 第二次编译反馈的两处 C2666 都来自字号断言：`FSlateFontInfo::Size` 是 float，而测试期望值写成了 int 字面量 `32`、`24`，导致 `FAutomationTestBase::TestEqual` 的多个重载之间出现歧义。改为同类型的 `32.0f`、`24.0f`，保留完整的浮点字号值，不把实际值转成整数，以免丢失小数后误判通过。
 
-同时核对本文件其余 TestEqual：子节点数量和 ZOrder 为整数比较，RenderOpacity 两侧均为 float，反射对齐值两侧均为 uint8，其余为同类型的 FString、FName、枚举或 bool。源码与差异检查通过；此处修复不代表 UE 编译通过，仍需本地重新编译并运行 P3 测试。
+同时核对本文件其余 TestEqual：子节点数量和 ZOrder 为整数比较，RenderOpacity 两侧均为 float，反射对齐值两侧均为 uint8，其余为同类型的 FString、FName、枚举或 bool。当时源码与差异检查通过；此后用户已确认 UE 编译通过，P3 自动化的剩余问题见第 5、8 节。
+
+## 8 2026-11-18 负例测试日志预期修复
+
+基于用户验收提交 `7063381` 和本地截图，P3 的 PreflightNoWrites、SaveReloadAndConflict、TreeAndVariables 已通过；以下两项的失败原因在测试对日志的处理。截图未显示构建结果断言失败，但仍需重跑确认修复后的整体结果。
+
+| 测试 | 失败原因 | 本次修复 |
+| --- | --- | --- |
+| CompileFailureDoesNotSave | 已匹配到一次包含 Slot 的编译告警，但另行登记的完整包路径日志没有出现。AddExpectedError 的次数参数 0 表示至少一次，并不是可选日志。 | 保留已观察到的 Slot 日志预期，移除没有依据的包路径日志要求；编译失败、成功状态为 false、不得保存及磁盘无目标等断言全部保留。 |
+| FileLuaAndSaveFailure | 普通文件挡住目标目录后，Win64 SavePackage 尝试移动临时文件并记录 MoveFile、Error moving file、Failed to move、Error saving；未登记的 Error 让自动化框架判定失败。 | 在构建前登记一条日志正则：限定上述四种消息和本次 GUID 对应的 P3_Block_<GUID>/WBP_SaveFailure.uasset。允许重试产生多条匹配日志，但必须至少出现一条；保留创建/编译成功、整体失败、bSaved=false、PACKAGE_SAVE_FAILED 和磁盘无目标等全部断言。 |
+
+本次没有关闭全局错误检测，也没有忽略所有文件保存错误。其他目标文件的错误、其他类型的错误和断言失败仍应导致测试失败。日志匹配以当前 UE 5.3.2 Win64 验证场景为依据，兼容路径中的正斜杠或反斜杠。
+
+云端检查：使用示例日志验证正则可匹配四种预期消息，拒绝不同 GUID、其他目标文件及无关错误；核对所有原有结果断言未改变，CRLF 和差异检查通过。云端未运行 UE，第 5 节已有 ✅ 保留，两项失败不改为通过。
+
+本地编译后优先重跑：
+
+```text
+Automation RunTests AutoBlueprint.P3.CompileFailureDoesNotSave
+Automation RunTests AutoBlueprint.P3.FileLuaAndSaveFailure
+```
+
+两项都应显示 Success；正常的预期日志可能显示为 Suppressed expected。随后运行 `Automation RunTests AutoBlueprint.P3` 确认整组通过，再更新第 5 节。
