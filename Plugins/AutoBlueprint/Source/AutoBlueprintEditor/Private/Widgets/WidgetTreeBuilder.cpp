@@ -32,9 +32,18 @@ namespace AutoBlueprint
 			if (!Type || !Type->bCanBuild)
 			{
 				AddDiagnostic(Diagnostics, Node, TEXT("BUILD_WIDGET_NOT_IMPLEMENTED"),
-					TEXT("P4 builds CanvasPanel, TextBlock, Button and Image. This protocol type has no build handler yet."));
+					TEXT("This protocol type has no build handler."));
 				return false;
 			}
+
+			// Data-driven widgets need a separate item/entry strategy, never the AddChild traversal.
+			if (Type->Children == EChildPolicy::DataDriven)
+			{
+				AddDiagnostic(Diagnostics, Node, TEXT("BUILD_CHILD_POLICY_NOT_IMPLEMENTED"),
+					TEXT("Data-driven widgets require a dedicated item/entry build strategy."));
+				return false;
+			}
+
 			if (Type->ValidateBuild && !Type->ValidateBuild(Node, Diagnostics))
 			{
 				return false;
@@ -111,6 +120,7 @@ namespace AutoBlueprint
 		{
 			Blueprint.WidgetTree = NewObject<UWidgetTree>(&Blueprint, TEXT("WidgetTree"), RF_Transactional);
 		}
+
 		if (!Blueprint.WidgetTree || Blueprint.WidgetTree->RootWidget)
 		{
 			WidgetTreeBuild::AddDiagnostic(Diagnostics, Layout.Root, TEXT("WIDGET_TREE_BUILD_FAILED"),

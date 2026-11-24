@@ -485,9 +485,9 @@ bool FAutoBlueprintP4PreflightTest::RunTest(const FString& Parameters)
 		{
 			const TSharedPtr<FJsonObject> Root = Fixture.Input->GetObjectField(TEXT("root"));
 
-			Root->SetStringField(TEXT("type"), TEXT("Overlay"));
+			Root->SetStringField(TEXT("type"), TEXT("ListView"));
 			Root->SetArrayField(TEXT("children"), TArray<TSharedPtr<FJsonValue>>());
-			Expected = TEXT("BUILD_WIDGET_NOT_IMPLEMENTED");
+			Expected = TEXT("UNSUPPORTED_WIDGET");
 		}
 
 		FAutoBlueprintBuildOptions Options;

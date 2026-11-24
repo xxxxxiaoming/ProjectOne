@@ -311,6 +311,21 @@ namespace
 				AddLayoutValidationError(R, TEXT("INVALID_SLOT"), Path + TEXT(".slot.type"), TEXT("Slot must match the parent container; root cannot have a slot."), N.Name.ToString());
 			}
 
+			if (N.SlotType == TEXT("ScaleBox"))
+			{
+				const TArray<FValue>& Padding = (*Slot)->GetArrayField(TEXT("padding"));
+
+				for (const FValue& Side : Padding)
+				{
+					if (Side->AsNumber() != 0.0)
+					{
+						AddLayoutValidationError(R, TEXT("UNSUPPORTED_SLOT_PROPERTY"), Path + TEXT(".slot.padding"),
+							TEXT("Native ScaleBox slots have no padding. Use an explicit Border or SizeBox wrapper for spacing."), N.Name.ToString());
+						break;
+					}
+				}
+			}
+
 			if ((*Slot)->HasField(TEXT("anchors")))
 			{
 				FObject A = (*Slot)->GetObjectField(TEXT("anchors"));

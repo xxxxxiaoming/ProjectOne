@@ -291,15 +291,13 @@ bool FAutoBlueprintP3PreflightTest::RunTest(const FString& Parameters)
 
 		if (Case == 0)
 		{
-			Root->SetStringField(TEXT("type"), TEXT("Overlay"));
-			Root->SetArrayField(TEXT("children"), TArray<TSharedPtr<FJsonValue>>());
-			ExpectedCode = TEXT("BUILD_WIDGET_NOT_IMPLEMENTED");
+			Button->GetObjectField(TEXT("slot"))->SetStringField(TEXT("type"), TEXT("Overlay"));
+			ExpectedCode = TEXT("INVALID_SLOT");
 		}
 		else if (Case == 1)
 		{
-			Root->SetStringField(TEXT("type"), TEXT("SizeBox"));
-			Root->SetArrayField(TEXT("children"), TArray<TSharedPtr<FJsonValue>>());
-			ExpectedCode = TEXT("BUILD_WIDGET_NOT_IMPLEMENTED");
+			Root->SetObjectField(TEXT("slot"), Button->GetObjectField(TEXT("slot")));
+			ExpectedCode = TEXT("INVALID_SLOT");
 		}
 		else if (Case == 2)
 		{
@@ -323,7 +321,7 @@ bool FAutoBlueprintP3PreflightTest::RunTest(const FString& Parameters)
 		TestFalse(TEXT("No disk target"), FPackageName::DoesPackageExist(PackagePath));
 		if (Case < 2)
 		{
-			TestTrue(TEXT("P2 protocol validation remains independent of P3 capabilities"), UAutoBlueprintLibrary::ValidateLayout(Json).bValid);
+			TestFalse(TEXT("P2 rejects incorrect parent/root slots before building"), UAutoBlueprintLibrary::ValidateLayout(Json).bValid);
 		}
 	}
 

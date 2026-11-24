@@ -1,6 +1,6 @@
 # AutoBlueprint 项目插件架构设计草案
 
-本方案用于在 ProjectOne 项目内实现 AutoBlueprint 编辑器插件：通过 Lua + UnLua 调用 C++ 编辑器核心，把经过审阅的 JSON 布局配置转换为标准 User Widget Blueprint `.uasset`，在 UMG Designer 中打开即可查看和编辑控件树。目标版本为 UE 5.3.2、UnLua 2.3.6，首版以 Win64 Editor 为验证基线。版本为 0.7 草案，更新日期 2026-11-24；P0/P1/P2/P3/P4 已由用户本地验证，P4 状态以 P4-Validation.md 第 5 节为准。
+本方案用于在 ProjectOne 项目内实现 AutoBlueprint 编辑器插件：通过 Lua + UnLua 调用 C++ 编辑器核心，把经过审阅的 JSON 布局配置转换为标准 User Widget Blueprint `.uasset`，在 UMG Designer 中打开即可查看和编辑控件树。目标版本为 UE 5.3.2、UnLua 2.3.6，首版以 Win64 Editor 为验证基线。版本为 0.8 草案，更新日期 2026-11-24；P0/P1/P2/P3/P4 已由用户本地验证，P4 状态以 P4-Validation.md 第 5 节为准。P5 容器与 Slot 已实现、待本地验证，见 P5-Validation.md 第 5 节。
 
 ## 1 范围与待确认项
 
@@ -14,7 +14,7 @@
 | 插件位置 | `ProjectOne/Plugins/AutoBlueprint/` |
 | 资产位置 | 项目 `/Game/UI/...`，对应 `ProjectOne/Content/UI/...` |
 | 重复生成 | 首版 CreateOnly；覆盖重建和保留人工修改的更新作为后续独立能力 |
-| 当前实现 | P0/P1/P2/P3/P4 已本地验证，详见 [P4 验证说明](P4-Validation.md) |
+| 当前实现 | P0/P1/P2/P3/P4 已本地验证；P5 已实现待本地验证，详见 [P5 验证说明](P5-Validation.md) |
 
 这里的“直接可用”指蓝图能够成功编译、保存、重新打开、实例化并通过 `AddToViewport` 显示。原生按钮可呈现常规交互样式，点击之后的游戏业务行为由后续逻辑实现。
 
@@ -492,7 +492,7 @@ print("Generated: " .. result.TargetAssetPath)
 
 现有收银 UI 的 `ASSET_MAP.md`、`UMG_LAYOUT.md` 与交互稿作为布局和命名依据。其中整板 JPG 应作为参考，不能用一张整板图片代替可编辑控件树；缺少独立切图的区域需要补图，或在确认后用原生控件组合表达。
 
-版本 0.7 草案以 Lua + UnLua + C++ 编辑器核心为实施基线。首版使用 CreateOnly，业务事件绑定、覆盖重建及增量更新留作后续能力。P0 及结果重构已由用户验证；P1/P2 已本地验证；P3 已本地验收通过；P4 已本地验收通过，记录见 `P0-Validation.md` 至 `P4-Validation.md`。
+版本 0.8 草案以 Lua + UnLua + C++ 编辑器核心为实施基线。首版使用 CreateOnly，业务事件绑定、覆盖重建及增量更新留作后续能力。P0 及结果重构已由用户验证；P1/P2 已本地验证；P3 已本地验收通过；P4 已本地验收通过，记录见 `P0-Validation.md` 至 `P4-Validation.md`。
 
 
 ### P4 已实现的资源任务入口
@@ -500,3 +500,8 @@ print("Generated: " .. result.TargetAssetPath)
 `GenerateFromLayout` / `GenerateFromLayoutFile` 返回一个 `FAutoBlueprintGenerationResult`，包含 Widget、Resources、任务 Diagnostics 和 ReportFilePath。Lua `generateTaskFromFile` 及 Console GenerateFromFile 使用该入口；原有 Build API 与 Lua `generateFromFile` 保持单 Widget 返回类型，非空资源清单会在写入前返回 RESOURCE_TASK_REQUIRED。GenerateBatch 仍为占位。
 
 `FResolvedResources` 在单次任务中缓存纹理和字体，通过 FGCObject 收集引用，覆盖导入、模板构建、编译、保存的生命周期。新纹理从再次校验的源字节交给 UTextureFactory 创建；CreateOnly 目标在创建前和保存前重查。复用资源不改设置、不保存；失败停止后续保存，不删除已创建或已保存对象。Image、字体和按钮样式通过注册表属性处理器接入，不另建生成管线。
+
+
+### P5 容器与 Slot 实现
+
+11 类约定控件均通过 WidgetTypeRegistry 登记处理器。Overlay/HorizontalBox/VerticalBox 使用原生面板，Border/SizeBox/ScaleBox 使用原生单子容器，Spacer 为叶子；父控件决定 Slot，Padding/Alignment 和 Box Auto/Fill 映射集中在 WidgetBuildHandlers。SizeBox 区分省略覆盖与显式零，ScaleBox 支持协议缩放枚举，但原生子 Slot 无 Padding：非零值在预检中明确拒绝，用户可显式增加 Border/SizeBox。DataDriven 类别保留独立策略边界，普通遍历拒绝该类别，不把未来 ListView 当作普通面板。能力矩阵、兼容负例调整及验收以 [P5-Validation.md](P5-Validation.md) 为准。

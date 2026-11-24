@@ -12,6 +12,17 @@
 #include "Styling/SlateBrush.h"
 #include "Styling/SlateTypes.h"
 #include "Components/Widget.h"
+#include "Components/Border.h"
+#include "Components/SizeBox.h"
+#include "Components/ScaleBox.h"
+#include "Components/Spacer.h"
+#include "Components/OverlaySlot.h"
+#include "Components/HorizontalBoxSlot.h"
+#include "Components/VerticalBoxSlot.h"
+#include "Components/BorderSlot.h"
+#include "Components/SizeBoxSlot.h"
+#include "Components/ScaleBoxSlot.h"
+#include "Components/SlateWrapperTypes.h"
 #include "Layout/LayoutSpec.h"
 #include "Layout/Margin.h"
 #include "Fonts/SlateFontInfo.h"
@@ -56,6 +67,49 @@ namespace AutoBlueprint
 			Result.Margin = Margin(Field(Value, TEXT("margin")));
 			Result.TintColor = FSlateColor(Color(Field(Value, TEXT("tint"))));
 			return Result;
+		}
+
+		template <typename TSlot>
+		void ApplyAlignment(TSlot& Slot, const FLayoutValue& Values)
+		{
+			const FString& Horizontal = Field(Values, TEXT("horizontal_alignment")).String;
+			const FString& Vertical = Field(Values, TEXT("vertical_alignment")).String;
+
+			Slot.SetHorizontalAlignment(Horizontal == TEXT("Left") ? HAlign_Left
+				: Horizontal == TEXT("Center") ? HAlign_Center : Horizontal == TEXT("Right") ? HAlign_Right : HAlign_Fill);
+			Slot.SetVerticalAlignment(Vertical == TEXT("Top") ? VAlign_Top
+				: Vertical == TEXT("Center") ? VAlign_Center : Vertical == TEXT("Bottom") ? VAlign_Bottom : VAlign_Fill);
+		}
+
+		template <typename TSlot>
+		bool ApplyPaddedSlot(UPanelSlot& Slot, const FLayoutValue& Values)
+		{
+			TSlot* TypedSlot = Cast<TSlot>(&Slot);
+
+			if (!TypedSlot)
+			{
+				return false;
+			}
+
+			TypedSlot->SetPadding(Margin(Field(Values, TEXT("padding"))));
+			ApplyAlignment(*TypedSlot, Values);
+			return true;
+		}
+
+		template <typename TSlot>
+		bool ApplyBoxSlot(UPanelSlot& Slot, const FLayoutValue& Values)
+		{
+			if (!ApplyPaddedSlot<TSlot>(Slot, Values))
+			{
+				return false;
+			}
+
+			FSlateChildSize Size;
+
+			Size.SizeRule = Field(Values, TEXT("size_rule")).String == TEXT("Fill") ? ESlateSizeRule::Fill : ESlateSizeRule::Automatic;
+			Size.Value = static_cast<float>(Field(Values, TEXT("fill")).Number);
+			CastChecked<TSlot>(&Slot)->SetSize(Size);
+			return true;
 		}
 	}
 
@@ -158,6 +212,88 @@ namespace AutoBlueprint
 		}
 	}
 
+	void ApplyBorderProperties(UWidget& Widget, const FLayoutNode& Node, const FResolvedResources& Resources)
+	{
+		UBorder& Border = *CastChecked<UBorder>(&Widget);
+		const TSharedPtr<FLayoutValue>* Brush = Node.Properties.Fields.Find(TEXT("brush"));
+
+		if (Brush)
+		{
+			Border.SetBrush(WidgetBuildValues::Brush(**Brush, Resources));
+		}
+
+		Border.SetContentColorAndOpacity(WidgetBuildValues::Color(WidgetBuildValues::Field(Node.Properties, TEXT("content_color"))));
+	}
+
+	void ApplySizeBoxProperties(UWidget& Widget, const FLayoutNode& Node, const FResolvedResources& Resources)
+	{
+		USizeBox& Box = *CastChecked<USizeBox>(&Widget);
+		const TSharedPtr<FLayoutValue>* Width = Node.Properties.Fields.Find(TEXT("width_override"));
+		const TSharedPtr<FLayoutValue>* Height = Node.Properties.Fields.Find(TEXT("height_override"));
+
+		// Absence means no override. Explicit zero is a valid enabled override.
+		if (Width)
+		{
+			Box.SetWidthOverride(static_cast<float>((*Width)->Number));
+		}
+		else
+		{
+			Box.ClearWidthOverride();
+		}
+
+		if (Height)
+		{
+			Box.SetHeightOverride(static_cast<float>((*Height)->Number));
+		}
+		else
+		{
+			Box.ClearHeightOverride();
+		}
+	}
+
+	void ApplyScaleBoxProperties(UWidget& Widget, const FLayoutNode& Node, const FResolvedResources& Resources)
+	{
+		UScaleBox& Box = *CastChecked<UScaleBox>(&Widget);
+		const FString& Stretch = WidgetBuildValues::Field(Node.Properties, TEXT("stretch")).String;
+		const FString& Direction = WidgetBuildValues::Field(Node.Properties, TEXT("stretch_direction")).String;
+		EStretch::Type StretchMode = EStretch::ScaleToFit;
+
+		if (Stretch == TEXT("None"))
+		{
+			StretchMode = EStretch::None;
+		}
+		else if (Stretch == TEXT("Fill"))
+		{
+			StretchMode = EStretch::Fill;
+		}
+		else if (Stretch == TEXT("ScaleToFitX"))
+		{
+			StretchMode = EStretch::ScaleToFitX;
+		}
+		else if (Stretch == TEXT("ScaleToFitY"))
+		{
+			StretchMode = EStretch::ScaleToFitY;
+		}
+		else if (Stretch == TEXT("ScaleToFill"))
+		{
+			StretchMode = EStretch::ScaleToFill;
+		}
+		else if (Stretch == TEXT("UserSpecified"))
+		{
+			StretchMode = EStretch::UserSpecified;
+		}
+
+		Box.SetStretch(StretchMode);
+		Box.SetStretchDirection(Direction == TEXT("DownOnly") ? EStretchDirection::DownOnly
+			: Direction == TEXT("UpOnly") ? EStretchDirection::UpOnly : EStretchDirection::Both);
+		Box.SetUserSpecifiedScale(static_cast<float>(WidgetBuildValues::Field(Node.Properties, TEXT("user_specified_scale")).Number));
+	}
+
+	void ApplySpacerProperties(UWidget& Widget, const FLayoutNode& Node, const FResolvedResources& Resources)
+	{
+		CastChecked<USpacer>(&Widget)->SetSize(WidgetBuildValues::Vector(WidgetBuildValues::Field(Node.Properties, TEXT("size"))));
+	}
+
 	bool ApplyCanvasChildSlot(UPanelSlot& Slot, const FLayoutValue& Values)
 	{
 		UCanvasPanelSlot* CanvasSlot = Cast<UCanvasPanelSlot>(&Slot);
@@ -181,21 +317,45 @@ namespace AutoBlueprint
 
 	bool ApplyButtonChildSlot(UPanelSlot& Slot, const FLayoutValue& Values)
 	{
-		UButtonSlot* ButtonSlot = Cast<UButtonSlot>(&Slot);
+		return WidgetBuildValues::ApplyPaddedSlot<UButtonSlot>(Slot, Values);
+	}
 
-		if (!ButtonSlot)
+	bool ApplyOverlayChildSlot(UPanelSlot& Slot, const FLayoutValue& Values)
+	{
+		return WidgetBuildValues::ApplyPaddedSlot<UOverlaySlot>(Slot, Values);
+	}
+
+	bool ApplyBorderChildSlot(UPanelSlot& Slot, const FLayoutValue& Values)
+	{
+		return WidgetBuildValues::ApplyPaddedSlot<UBorderSlot>(Slot, Values);
+	}
+
+	bool ApplySizeBoxChildSlot(UPanelSlot& Slot, const FLayoutValue& Values)
+	{
+		return WidgetBuildValues::ApplyPaddedSlot<USizeBoxSlot>(Slot, Values);
+	}
+
+	bool ApplyHorizontalBoxChildSlot(UPanelSlot& Slot, const FLayoutValue& Values)
+	{
+		return WidgetBuildValues::ApplyBoxSlot<UHorizontalBoxSlot>(Slot, Values);
+	}
+
+	bool ApplyVerticalBoxChildSlot(UPanelSlot& Slot, const FLayoutValue& Values)
+	{
+		return WidgetBuildValues::ApplyBoxSlot<UVerticalBoxSlot>(Slot, Values);
+	}
+
+	bool ApplyScaleBoxChildSlot(UPanelSlot& Slot, const FLayoutValue& Values)
+	{
+		UScaleBoxSlot* ScaleSlot = Cast<UScaleBoxSlot>(&Slot);
+
+		if (!ScaleSlot)
 		{
 			return false;
 		}
 
-		const FString& Horizontal = WidgetBuildValues::Field(Values, TEXT("horizontal_alignment")).String;
-		const FString& Vertical = WidgetBuildValues::Field(Values, TEXT("vertical_alignment")).String;
-
-		ButtonSlot->SetPadding(WidgetBuildValues::Margin(WidgetBuildValues::Field(Values, TEXT("padding"))));
-		ButtonSlot->SetHorizontalAlignment(Horizontal == TEXT("Left") ? HAlign_Left
-			: Horizontal == TEXT("Center") ? HAlign_Center : Horizontal == TEXT("Right") ? HAlign_Right : HAlign_Fill);
-		ButtonSlot->SetVerticalAlignment(Vertical == TEXT("Top") ? VAlign_Top
-			: Vertical == TEXT("Center") ? VAlign_Center : Vertical == TEXT("Bottom") ? VAlign_Bottom : VAlign_Fill);
+		// Native ScaleBox has no padding; preflight rejects nonzero padding instead of ignoring it.
+		WidgetBuildValues::ApplyAlignment(*ScaleSlot, Values);
 		return true;
 	}
 }

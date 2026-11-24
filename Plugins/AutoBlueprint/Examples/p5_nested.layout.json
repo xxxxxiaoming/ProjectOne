@@ -1,0 +1,343 @@
+{
+  "schema_version": 1,
+  "asset": {
+    "package_path": "/Game/UI/AutoBlueprintTests/WBP_P5_Nested"
+  },
+  "design": {
+    "width": 960,
+    "height": 640
+  },
+  "root": {
+    "name": "RootCanvas",
+    "type": "CanvasPanel",
+    "is_variable": false,
+    "children": [
+      {
+        "name": "Overlay_Main",
+        "type": "Overlay",
+        "is_variable": true,
+        "slot": {
+          "type": "Canvas",
+          "anchors": {
+            "min": [
+              0,
+              0
+            ],
+            "max": [
+              1,
+              1
+            ]
+          },
+          "offsets": [
+            24,
+            24,
+            24,
+            24
+          ],
+          "z_order": 2
+        },
+        "children": [
+          {
+            "name": "Border_Card",
+            "type": "Border",
+            "is_variable": true,
+            "slot": {
+              "type": "Overlay",
+              "horizontal_alignment": "Fill",
+              "vertical_alignment": "Fill",
+              "padding": [
+                4,
+                6,
+                8,
+                10
+              ]
+            },
+            "properties": {
+              "content_color": [
+                0.9,
+                0.8,
+                0.7,
+                1
+              ]
+            },
+            "children": [
+              {
+                "name": "Column_Card",
+                "type": "VerticalBox",
+                "is_variable": true,
+                "slot": {
+                  "type": "Border",
+                  "horizontal_alignment": "Fill",
+                  "vertical_alignment": "Fill",
+                  "padding": [
+                    12,
+                    14,
+                    16,
+                    18
+                  ]
+                },
+                "children": [
+                  {
+                    "name": "TXT_Header",
+                    "type": "TextBlock",
+                    "is_variable": true,
+                    "slot": {
+                      "type": "VerticalBox",
+                      "horizontal_alignment": "Center",
+                      "vertical_alignment": "Top",
+                      "padding": [
+                        1,
+                        2,
+                        3,
+                        4
+                      ]
+                    },
+                    "properties": {
+                      "text": "P5 nested containers",
+                      "font_size": 28
+                    }
+                  },
+                  {
+                    "name": "Row_Content",
+                    "type": "HorizontalBox",
+                    "is_variable": true,
+                    "slot": {
+                      "type": "VerticalBox",
+                      "horizontal_alignment": "Fill",
+                      "vertical_alignment": "Fill",
+                      "padding": [
+                        5,
+                        6,
+                        7,
+                        8
+                      ],
+                      "size_rule": "Fill",
+                      "fill": 2
+                    },
+                    "children": [
+                      {
+                        "name": "Size_Art",
+                        "type": "SizeBox",
+                        "is_variable": true,
+                        "slot": {
+                          "type": "HorizontalBox",
+                          "horizontal_alignment": "Left",
+                          "vertical_alignment": "Center",
+                          "padding": [
+                            9,
+                            10,
+                            11,
+                            12
+                          ]
+                        },
+                        "properties": {
+                          "width_override": 160,
+                          "height_override": 100
+                        },
+                        "children": [
+                          {
+                            "name": "Scale_Art",
+                            "type": "ScaleBox",
+                            "is_variable": true,
+                            "slot": {
+                              "type": "SizeBox",
+                              "horizontal_alignment": "Center",
+                              "vertical_alignment": "Bottom",
+                              "padding": [
+                                3,
+                                4,
+                                5,
+                                6
+                              ]
+                            },
+                            "properties": {
+                              "stretch": "ScaleToFit",
+                              "stretch_direction": "DownOnly",
+                              "user_specified_scale": 1.25
+                            },
+                            "children": [
+                              {
+                                "name": "IMG_Art",
+                                "type": "Image",
+                                "is_variable": true,
+                                "slot": {
+                                  "type": "ScaleBox",
+                                  "horizontal_alignment": "Right",
+                                  "vertical_alignment": "Top",
+                                  "padding": [
+                                    0,
+                                    0,
+                                    0,
+                                    0
+                                  ]
+                                },
+                                "properties": {
+                                  "render_opacity": 0.8
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "Gap",
+                        "type": "Spacer",
+                        "is_variable": false,
+                        "slot": {
+                          "type": "HorizontalBox",
+                          "horizontal_alignment": "Fill",
+                          "vertical_alignment": "Fill"
+                        },
+                        "properties": {
+                          "size": [
+                            24,
+                            12
+                          ]
+                        }
+                      },
+                      {
+                        "name": "BTN_Confirm",
+                        "type": "Button",
+                        "is_variable": true,
+                        "slot": {
+                          "type": "HorizontalBox",
+                          "horizontal_alignment": "Fill",
+                          "vertical_alignment": "Center",
+                          "padding": [
+                            1,
+                            2,
+                            3,
+                            4
+                          ],
+                          "size_rule": "Fill",
+                          "fill": 3
+                        },
+                        "properties": {
+                          "is_focusable": false
+                        },
+                        "children": [
+                          {
+                            "name": "TXT_Button",
+                            "type": "TextBlock",
+                            "is_variable": false,
+                            "slot": {
+                              "type": "Button",
+                              "horizontal_alignment": "Center",
+                              "vertical_alignment": "Center",
+                              "padding": [
+                                6,
+                                7,
+                                8,
+                                9
+                              ]
+                            },
+                            "properties": {
+                              "text": "Confirm"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Tail",
+                    "type": "Spacer",
+                    "is_variable": false,
+                    "slot": {
+                      "type": "VerticalBox",
+                      "horizontal_alignment": "Fill",
+                      "vertical_alignment": "Fill",
+                      "size_rule": "Fill",
+                      "fill": 1
+                    },
+                    "properties": {
+                      "size": [
+                        8,
+                        10
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Corner",
+            "type": "Spacer",
+            "is_variable": false,
+            "slot": {
+              "type": "Overlay",
+              "horizontal_alignment": "Right",
+              "vertical_alignment": "Bottom",
+              "padding": [
+                2,
+                4,
+                6,
+                8
+              ]
+            },
+            "properties": {
+              "size": [
+                16,
+                20
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "Size_Default",
+        "type": "SizeBox",
+        "is_variable": false,
+        "slot": {
+          "type": "Canvas",
+          "offsets": [
+            50,
+            500,
+            0,
+            0
+          ],
+          "auto_size": true,
+          "alignment": [
+            0.5,
+            0.5
+          ],
+          "z_order": 7
+        },
+        "children": [
+          {
+            "name": "TXT_Default",
+            "type": "TextBlock",
+            "is_variable": false,
+            "slot": {
+              "type": "SizeBox",
+              "horizontal_alignment": "Fill",
+              "vertical_alignment": "Fill"
+            },
+            "properties": {
+              "text": "Auto size / no override"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Size_Zero",
+        "type": "SizeBox",
+        "is_variable": false,
+        "slot": {
+          "type": "Canvas",
+          "offsets": [
+            0,
+            0,
+            8,
+            8
+          ]
+        },
+        "properties": {
+          "width_override": 0,
+          "height_override": 0
+        }
+      }
+    ]
+  }
+}
