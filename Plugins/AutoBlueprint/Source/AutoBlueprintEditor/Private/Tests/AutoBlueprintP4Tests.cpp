@@ -34,6 +34,7 @@
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
 #include "Templates/SubclassOf.h"
+#include "TextureCompiler.h"
 #include "UObject/Package.h"
 #include "UObject/StrongObjectPtr.h"
 #include "UObject/UnrealType.h"
@@ -279,14 +280,24 @@ bool FAutoBlueprintP4ImportTest::RunTest(const FString& Parameters)
 			return false;
 		}
 
+		TestFalse(TEXT("Imported texture compilation completes before returning the task"), Texture->IsCompiling());
 		TestTrue(TEXT("New texture has UI import settings"), Texture->LODGroup == TEXTUREGROUP_UI
 			&& Texture->CompressionSettings == TC_EditorIcon && Texture->MipGenSettings == TMGS_NoMipmaps && Texture->SRGB);
-		// Deliberately different shared settings: subsequent reuse must preserve them.
+
+		// Set up a different, fully built shared texture before testing read-only reuse.
+		// Direct property writes without PreEditChange can invalidate an in-flight build.
+		Texture->PreEditChange(nullptr);
 		Texture->LODGroup = TEXTUREGROUP_World;
 		Texture->CompressionSettings = TC_Grayscale;
 		Texture->MipGenSettings = TMGS_FromTextureGroup;
 		Texture->Filter = TF_Nearest;
 		Texture->SRGB = false;
+		Texture->PostEditChange();
+
+		UTexture* TexturesToFinish[] = { Texture };
+
+		FTextureCompilingManager::Get().FinishCompilation(TexturesToFinish);
+		TestFalse(TEXT("Shared fixture compilation completes before reuse"), Texture->IsCompiling());
 		Texture->GetOutermost()->SetDirtyFlag(false);
 
 		const TSharedRef<FJsonObject> Reuse = MakeShared<FJsonObject>();

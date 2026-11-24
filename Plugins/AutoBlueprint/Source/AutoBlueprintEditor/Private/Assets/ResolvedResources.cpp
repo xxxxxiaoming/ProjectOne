@@ -11,6 +11,7 @@
 #include "Misc/FeedbackContext.h"
 #include "Misc/PackageName.h"
 #include "Misc/Paths.h"
+#include "TextureCompiler.h"
 #include "UObject/Package.h"
 #include "UObject/SoftObjectPath.h"
 #include "UObject/StrongObjectPtr.h"
@@ -180,6 +181,10 @@ namespace AutoBlueprint
 
 			Textures.Add(Resource.Alias, Texture);
 			Item.bImported = true;
+
+			// The factory can return while an async texture build is still running. Finish
+			// the previous edit before changing settings used by its derived-data key.
+			Texture->PreEditChange(nullptr);
 			Texture->LODGroup = TEXTUREGROUP_UI;
 			Texture->CompressionSettings = TC_EditorIcon;
 			Texture->MipGenSettings = TMGS_NoMipmaps;
@@ -190,6 +195,12 @@ namespace AutoBlueprint
 			}
 
 			Texture->PostEditChange();
+
+			UTexture* TexturesToFinish[] = { Texture };
+
+			// This synchronous task needs final dimensions/resources for brushes and saving.
+			// Drain only this new texture, including the manager's post-compilation work.
+			FTextureCompilingManager::Get().FinishCompilation(TexturesToFinish);
 			FAssetRegistryModule::AssetCreated(Texture);
 			Texture->MarkPackageDirty();
 			Item.bSuccess = !bSaveRequested;

@@ -161,3 +161,30 @@ lua Plugins/AutoBlueprint/Scripts/Tests/p4_sdk_test.lua
 7. 关闭编辑器并重开项目，再打开 Widget，检查图片和字体仍在、四态和变量仍在；用 CreateWidget/AddToViewport 显示。P4 自动化的同会话卸载重载不能替代这一步。
 
 完整 cook/打包与完整页面视觉还原仍按后续阶段验收；P4 不宣称 P5–P7 已完成。
+
+
+## 6 2026-11-24 纹理异步编译断言修复
+
+用户运行 P4 自动化时，在 `FTextureCompilingManager::AddTextures` 命中 `bIsRoutingPostCompilation == false` 断言。截图调用链是编译完成处理 → UpdateResource → CreateResource → 再次加入纹理编译队列，说明完成回调中发生了不允许的重新注册；截图没有显示最初修改纹理的插件调用位置。
+
+源码检查发现两处未遵守纹理编辑生命周期的写入：
+
+| 位置 | 原行为 | 修复 |
+| --- | --- | --- |
+| `ResolvedResources.cpp` 新纹理导入 | 工厂返回后直接改 LODGroup、CompressionSettings、MipGenSettings、SRGB，再 PostEditChange；工厂先前发起的编译可能尚未完成 | 修改前调用 PreEditChange(nullptr)，修改后 PostEditChange；再用 FTextureCompilingManager::FinishCompilation 等待这一张新纹理编译及收尾完成，之后才继续画刷构建和保存 |
+| `AutoBlueprintP4Tests.cpp` / ImportStylesAndReuse | 为测试“复用不改设置”，直接修改刚导入的纹理设置，没有 PreEditChange/PostEditChange | 使用完整的 PreEditChange → 设置修改 → PostEditChange → 等待该纹理完成编译流程，再清理测试脏标记并执行复用；增加任务返回后和测试夹具准备完成后的 IsCompiling=false 断言 |
+
+原因是纹理分组、压缩、Mip 等设置参与编译产物的生成。旧编译还没结束就改变这些输入，可能导致引擎在完成旧编译、创建渲染资源时发现需要重新编译，进而触发截图中的断言。Epic 的 [UE-201308](https://issues.unrealengine.com/issue/UE-201308) 也记录了 UE 5.3.2 在导入后修改 UI 分组时的同类调用栈；这支持故障机制判断，但不能替代本项目的本地复测。
+
+修复仅等待当前纹理，不调用全局 FinishAllCompilation，不关闭异步纹理编译，不屏蔽引擎断言。生产代码的已有资源复用分支保持只读。新纹理仍只在原有保存阶段写入磁盘，bSave 与各包结果语义不变。
+
+云端完成差异、CRLF、生命周期调用顺序检查；没有 UE 环境，尚未运行真实编译与复现。第 5 节本地验收状态仍为待验证。
+
+本地重新完整编译并重启编辑器，保持正常的异步纹理编译设置，优先执行：
+
+```text
+Automation RunTests AutoBlueprint.P4.ImportStylesAndReuse
+Automation RunTests AutoBlueprint.P4
+```
+
+整组连续运行两次，并在测试结束后让编辑器继续正常运行，确认下一帧的异步编译收尾也不再触发断言。随后回归 P3/P2/P1/P0，并用第 1 节人工样例检查图片、九宫格和保存重载。不要将这次修改仅以“测试显示 Success”记为完成，截图中的异常可能延迟到编辑器 Tick 才出现。
