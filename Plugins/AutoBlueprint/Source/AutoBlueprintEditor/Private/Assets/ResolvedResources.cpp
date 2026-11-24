@@ -113,6 +113,7 @@ namespace AutoBlueprint
 			Item.bAttempted = true;
 			if (!Resource.ObjectPath.IsEmpty())
 			{
+				// reference an existing UTexture2D.
 				UTexture2D* Texture = Cast<UTexture2D>(FSoftObjectPath(Resource.ObjectPath).TryLoad());
 
 				if (!Texture)
@@ -128,6 +129,7 @@ namespace AutoBlueprint
 				continue;
 			}
 
+			// import to ue become texture asset.
 			FString Full;
 			TArray<uint8> Bytes;
 			FAutoBlueprintValidationResult ReadResult;
