@@ -1,6 +1,6 @@
 # AutoBlueprint 项目插件架构设计草案
 
-本方案用于在 ProjectOne 项目内实现 AutoBlueprint 编辑器插件：通过 Lua + UnLua 调用 C++ 编辑器核心，把经过审阅的 JSON 布局配置转换为标准 User Widget Blueprint `.uasset`，在 UMG Designer 中打开即可查看和编辑控件树。目标版本为 UE 5.3.2、UnLua 2.3.6，首版以 Win64 Editor 为验证基线。版本为 0.6 草案，更新日期 2026-11-18；P0/P1/P2/P3 已由用户本地验证，P4 资源与样式已实现、待本地编译与验收，见 P4-Validation.md。
+本方案用于在 ProjectOne 项目内实现 AutoBlueprint 编辑器插件：通过 Lua + UnLua 调用 C++ 编辑器核心，把经过审阅的 JSON 布局配置转换为标准 User Widget Blueprint `.uasset`，在 UMG Designer 中打开即可查看和编辑控件树。目标版本为 UE 5.3.2、UnLua 2.3.6，首版以 Win64 Editor 为验证基线。版本为 0.7 草案，更新日期 2026-11-24；P0/P1/P2/P3/P4 已由用户本地验证，P4 状态以 P4-Validation.md 第 5 节为准。
 
 ## 1 范围与待确认项
 
@@ -14,7 +14,7 @@
 | 插件位置 | `ProjectOne/Plugins/AutoBlueprint/` |
 | 资产位置 | 项目 `/Game/UI/...`，对应 `ProjectOne/Content/UI/...` |
 | 重复生成 | 首版 CreateOnly；覆盖重建和保留人工修改的更新作为后续独立能力 |
-| 当前实现 | P0/P1/P2/P3 已本地验证；P4 已实现待 UE 验证，详见 [P4 验证说明](P4-Validation.md) |
+| 当前实现 | P0/P1/P2/P3/P4 已本地验证，详见 [P4 验证说明](P4-Validation.md) |
 
 这里的“直接可用”指蓝图能够成功编译、保存、重新打开、实例化并通过 `AddToViewport` 显示。原生按钮可呈现常规交互样式，点击之后的游戏业务行为由后续逻辑实现。
 
@@ -319,7 +319,7 @@ P1 采用 Output Log 命令入口（`AutoBlueprint.Run`、`AutoBlueprint.Generat
 
 `require("examples.helper")` 仅发现 `Scripts/Lua/examples/helper.lua`，使用每任务缓存与循环依赖检测，不回退到游戏或原生模块搜索路径。脚本是可信项目工具，加载路径约束不构成不可信代码沙箱。脚本返回带 `run(arguments)` 的表，任务成功需返回 true。限制与示例见 [P1-Validation.md](P1-Validation.md)。
 
-C++ 核心仍由编辑器子系统提供 ValidateLayout 和 BuildWidgetBlueprint。面向 Lua 增加静态 UFUNCTION 门面 AutoBlueprintLibrary，提供文件入口并转调子系统。以下省略无关声明；真实声明以 Public 头文件为准。P3 反射和 UE 5.3.2 编译已本地验证；P4 新接口待本地验证。
+C++ 核心仍由编辑器子系统提供 ValidateLayout 和 BuildWidgetBlueprint。面向 Lua 增加静态 UFUNCTION 门面 AutoBlueprintLibrary，提供文件入口并转调子系统。以下省略无关声明；真实声明以 Public 头文件为准。P3 反射和 UE 5.3.2 编译已本地验证；P4 新接口也已按第 5 节验收记录通过本地验证。
 
 ```cpp
 #pragma once
@@ -492,7 +492,7 @@ print("Generated: " .. result.TargetAssetPath)
 
 现有收银 UI 的 `ASSET_MAP.md`、`UMG_LAYOUT.md` 与交互稿作为布局和命名依据。其中整板 JPG 应作为参考，不能用一张整板图片代替可编辑控件树；缺少独立切图的区域需要补图，或在确认后用原生控件组合表达。
 
-版本 0.6 草案以 Lua + UnLua + C++ 编辑器核心为实施基线。首版使用 CreateOnly，业务事件绑定、覆盖重建及增量更新留作后续能力。P0 及结果重构已由用户验证；P1/P2 已本地验证；P3 已本地验收通过；P4 已实现待本地验收，记录见 `P0-Validation.md` 至 `P4-Validation.md`。
+版本 0.7 草案以 Lua + UnLua + C++ 编辑器核心为实施基线。首版使用 CreateOnly，业务事件绑定、覆盖重建及增量更新留作后续能力。P0 及结果重构已由用户验证；P1/P2 已本地验证；P3 已本地验收通过；P4 已本地验收通过，记录见 `P0-Validation.md` 至 `P4-Validation.md`。
 
 
 ### P4 已实现的资源任务入口
