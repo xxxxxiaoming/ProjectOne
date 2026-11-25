@@ -175,6 +175,14 @@ FAutoBlueprintLuaRunResult FAutoBlueprintEditorLuaRunner::Run(const FAutoBluepri
 	UnLua::FLuaEnv Environment;
 	Environment.SetName(TEXT("AutoBlueprint_Tool"));
 	lua_State* State = Environment.GetMainState();
+
+#if WITH_DEV_AUTOMATION_TESTS
+	if (bSimulateUnavailableStateForTest)
+	{
+		State = nullptr;
+	}
+#endif
+
 	if (!State)
 	{
 		Result.Code = TEXT("LUA_ENV_INIT_FAILED");

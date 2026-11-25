@@ -46,6 +46,12 @@ public:
 	FAutoBlueprintBatchBuildResult GenerateBatch(const FAutoBlueprintBatchRequest& Request);
 
 private:
+	void RecordScriptOperation(const TCHAR* Operation, const FAutoBlueprintBuildResult& Result);
+	void RecordScriptOperation(const TCHAR* Operation, const FAutoBlueprintGenerationResult& Result);
+
+	// Task-local value snapshots; no VM, callback or UObject is retained here.
+	TArray<FAutoBlueprintScriptOperation> ScriptOperations;
+
 	bool bAcceptScriptRequests = false;
 	bool bScriptInProgress = false;
 	bool bBuildInProgress = false;

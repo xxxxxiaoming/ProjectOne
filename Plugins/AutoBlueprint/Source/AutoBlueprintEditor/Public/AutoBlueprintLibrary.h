@@ -46,7 +46,8 @@ public:
 	 * Run a trusted plugin tool synchronously on the editor game thread outside PIE/SIE.
 	 * ScriptPath is relative to Scripts/Lua; module.run receives Arguments as a Lua table.
 	 * Releases the fresh task VM before returning; nested script requests are rejected.
-	 * Scripts may call build APIs. A later script failure does not roll back saved assets.
+	 * Scripts may call build APIs. Operations preserves completed subsystem generation results even after Lua errors.
+	 * bSuccess describes script completion only; inspect each operation. No rollback or batch scheduling.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "AutoBlueprint|Tools")
 	static FAutoBlueprintLuaRunResult RunEditorScript(const FAutoBlueprintLuaRunRequest& Request);

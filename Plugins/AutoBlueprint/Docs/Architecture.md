@@ -1,6 +1,6 @@
 # AutoBlueprint 项目插件架构设计草案
 
-本方案用于在 ProjectOne 项目内实现 AutoBlueprint 编辑器插件：通过 Lua + UnLua 调用 C++ 编辑器核心，把经过审阅的 JSON 布局配置转换为标准 User Widget Blueprint `.uasset`，在 UMG Designer 中打开即可查看和编辑控件树。目标版本为 UE 5.3.2、UnLua 2.3.6，首版以 Win64 Editor 为验证基线。版本为 0.9 草案，更新日期 2026-11-25；P0/P1/P2/P3/P4/P5 已由用户本地验证通过，P5 状态以 P5-Validation.md 第 5 节为准（验收记录提交 cbd7160）。P6/P7 待开发。
+本方案用于在 ProjectOne 项目内实现 AutoBlueprint 编辑器插件：通过 Lua + UnLua 调用 C++ 编辑器核心，把经过审阅的 JSON 布局配置转换为标准 User Widget Blueprint `.uasset`，在 UMG Designer 中打开即可查看和编辑控件树。目标版本为 UE 5.3.2、UnLua 2.3.6，首版以 Win64 Editor 为验证基线。版本为 0.10 草案，更新日期 2026-11-25；P0/P1/P2/P3/P4/P5 已由用户本地验证通过，P5 状态以 P5-Validation.md 第 5 节为准（验收记录提交 cbd7160）。P6 已实现、待本地验证，见 P6-Validation.md 第 5 节；P7 待开发。
 
 ## 1 范围与待确认项
 
@@ -14,7 +14,7 @@
 | 插件位置 | `ProjectOne/Plugins/AutoBlueprint/` |
 | 资产位置 | 项目 `/Game/UI/...`，对应 `ProjectOne/Content/UI/...` |
 | 重复生成 | 首版 CreateOnly；覆盖重建和保留人工修改的更新作为后续独立能力 |
-| 当前实现 | P0/P1/P2/P3/P4/P5 已本地验证通过；P6/P7 待开发，详见 [P5 验证说明](P5-Validation.md) |
+| 当前实现 | P0/P1/P2/P3/P4/P5 已本地验证通过；P6 已实现待本地验证，P7 待开发，详见 [P6 验证说明](P6-Validation.md) |
 
 这里的“直接可用”指蓝图能够成功编译、保存、重新打开、实例化并通过 `AddToViewport` 显示。原生按钮可呈现常规交互样式，点击之后的游戏业务行为由后续逻辑实现。
 
@@ -492,7 +492,7 @@ print("Generated: " .. result.TargetAssetPath)
 
 现有收银 UI 的 `ASSET_MAP.md`、`UMG_LAYOUT.md` 与交互稿作为布局和命名依据。其中整板 JPG 应作为参考，不能用一张整板图片代替可编辑控件树；缺少独立切图的区域需要补图，或在确认后用原生控件组合表达。
 
-版本 0.9 草案以 Lua + UnLua + C++ 编辑器核心为实施基线。首版使用 CreateOnly，业务事件绑定、覆盖重建及增量更新留作后续能力。P0 及结果重构已由用户验证；P1/P2 已本地验证；P3 已本地验收通过；P4/P5 已本地验收通过，记录见 `P0-Validation.md` 至 `P5-Validation.md`。
+版本 0.10 草案以 Lua + UnLua + C++ 编辑器核心为实施基线。首版使用 CreateOnly，业务事件绑定、覆盖重建及增量更新留作后续能力。P0 及结果重构已由用户验证；P1/P2 已本地验证；P3 已本地验收通过；P4/P5 已本地验收通过，记录见 `P0-Validation.md` 至 `P5-Validation.md`。
 
 
 ### P4 已实现的资源任务入口
@@ -505,3 +505,10 @@ print("Generated: " .. result.TargetAssetPath)
 ### P5 容器与 Slot 实现
 
 11 类约定控件均通过 WidgetTypeRegistry 登记处理器。Overlay/HorizontalBox/VerticalBox 使用原生面板，Border/SizeBox/ScaleBox 使用原生单子容器，Spacer 为叶子；父控件决定 Slot，Padding/Alignment 和 Box Auto/Fill 映射集中在 WidgetBuildHandlers。SizeBox 区分省略覆盖与显式零，ScaleBox 支持协议缩放枚举，但原生子 Slot 无 Padding：非零值在预检中明确拒绝，用户可显式增加 Border/SizeBox。DataDriven 类别保留独立策略边界，普通遍历拒绝该类别，不把未来 ListView 当作普通面板。能力矩阵、兼容负例调整及验收以 [P5-Validation.md](P5-Validation.md) 为准。
+
+
+### P6 脚本结果与可靠性验证
+
+`FAutoBlueprintLuaRunResult.Operations` 按完成顺序保留本次脚本进入子系统的 Build/Generate 调用结果；每条包含入口名称与独立的 `FAutoBlueprintGenerationResult`。旧 Build 结果放在 Widget 内，资源数组为空；Smoke 成功委托 BuildWidgetBlueprint，只记录一次。脚本异常不会丢弃已完成的生成记录，也不会回滚已保存包。宿主 bSuccess 只表示脚本完成，资产状态逐条读取。记录为值副本，不持有 UObject 或 VM；子系统在结束时转交记录并清空，控制台同时列出各资产状态与已有报告路径。没有新增批量执行或磁盘脚本汇总报告。
+
+P6 测试覆盖保存后抛错、部分保存后正常/异常结束、脏资产及保存前冲突保护、源文件重查、缓存 GC 生命周期、上下文拒绝和真实 Lua 读取返回记录。环境初始化错误使用仅开发测试可用的实例级开关验证缺少 state 的处理分支，不模拟构造器内部致命内存耗尽。PIE/SIE、实际游戏 Lua 启动及退出/重开列入人工验收。能力边界及当前检查状态以 [P6-Validation.md](P6-Validation.md) 第 5 节为准。

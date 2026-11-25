@@ -185,7 +185,7 @@ private:
 		UE_LOG(LogAutoBlueprint, Log, TEXT("AutoBlueprint.Run examples/hello.lua - no asset writes; quote arguments containing spaces."));
 		UE_LOG(LogAutoBlueprint, Log, TEXT("Run arguments: double quotes wrap whole arguments; empty quotes preserve an empty argument. Whitespace inside quotes becomes one space; inside quotes, \\\" and \\\\ escape quotes and backslashes. Other commands retain their existing argument rules."));
 		UE_LOG(LogAutoBlueprint, Log, TEXT("AutoBlueprint.P0.Generate <new_package_path> - fixed Widget Blueprint; AutoBlueprint.P0.ErrorProbe - traceback probe."));
-		UE_LOG(LogAutoBlueprint, Log, TEXT("AutoBlueprint.GenerateFromFile <layout_path> - generate/save one P3 Canvas/Text/Button layout; existing targets are rejected. GenerateBatch is not implemented."));
+		UE_LOG(LogAutoBlueprint, Log, TEXT("AutoBlueprint.GenerateFromFile <layout_path> - generate/save one layout using the 11 supported widget types and declared textures; existing targets are rejected. GenerateBatch is not implemented."));
 	}
 
 	void RunBundled(const FString& ScriptPath, const TArray<FString>& Arguments)
@@ -198,6 +198,24 @@ private:
 
 	void ReportRun(const FAutoBlueprintLuaRunResult& Result) const
 	{
+		// A script failure does not undo prior calls. Always show their independent outcomes.
+		for (int32 Index = 0; Index < Result.Operations.Num(); ++Index)
+		{
+			const FAutoBlueprintScriptOperation& Entry = Result.Operations[Index];
+			const FAutoBlueprintBuildResult& Widget = Entry.Result.Widget;
+
+			UE_LOG(LogAutoBlueprint, Log, TEXT("Operation %d %s: success=%d Widget=%s created=%d compiled=%d saved=%d report=%s"),
+				Index + 1, *Entry.Operation, Entry.Result.bSuccess, *Widget.TargetAssetPath,
+				Widget.bAssetCreated, Widget.bCompiled, Widget.bSaved, *Entry.Result.ReportFilePath);
+
+			for (const FAutoBlueprintResourceResult& Resource : Entry.Result.Resources)
+			{
+				UE_LOG(LogAutoBlueprint, Log, TEXT("  Resource %s: %s attempted=%d reused=%d imported=%d saved=%d success=%d"),
+					*Resource.Alias, *Resource.TargetAssetPath, Resource.bAttempted, Resource.bReused,
+					Resource.bImported, Resource.bSaved, Resource.bSuccess);
+			}
+		}
+
 		if (Result.bSuccess)
 		{
 			UE_LOG(LogAutoBlueprint, Log, TEXT("AutoBlueprint Lua task completed; its tool environment has been released: %s"), *Result.ScriptPath);

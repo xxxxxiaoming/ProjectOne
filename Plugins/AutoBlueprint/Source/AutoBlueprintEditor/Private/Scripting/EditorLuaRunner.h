@@ -13,6 +13,11 @@ public:
 	/** Compatibility adapter for P0 C++ tests; uses the same P1 host and argument contract. */
 	FAutoBlueprintLuaRunResult Run(const FString& ScriptFilename, const FString& PackagePath);
 
+#if WITH_DEV_AUTOMATION_TESTS
+	/** Instance-local fault injection: exercise missing-state cleanup without provoking an allocation failure. */
+	bool bSimulateUnavailableStateForTest = false;
+#endif
+
 private:
 	bool bRunning = false;
 };

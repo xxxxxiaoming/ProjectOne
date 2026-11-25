@@ -59,6 +59,7 @@ namespace
 			AddError(Result, TEXT("ASSET_ALREADY_EXISTS"), TEXT("The target package already exists in memory or on disk. Choose a new name."));
 			return false;
 		}
+
 		if (Request.TitleText.IsEmpty() || Request.ButtonText.IsEmpty()
 			|| Request.TitleText.Len() > 256 || Request.ButtonText.Len() > 256)
 		{
@@ -78,15 +79,20 @@ FAutoBlueprintBuildResult UAutoBlueprintSubsystem::BuildSmokeTestWidget(const FA
 	if (!AutoBlueprint::CheckEditorContext(ContextCode, ContextMessage))
 	{
 		AddError(Result, *ContextCode, ContextMessage);
+		RecordScriptOperation(TEXT("BuildSmokeTestWidget"), Result);
 		return Result;
 	}
+
 	if (!bAcceptScriptRequests || bBuildInProgress)
 	{
 		AddError(Result, TEXT("EDITOR_BUSY"), TEXT("An initialized, idle editor subsystem is required."));
+		RecordScriptOperation(TEXT("BuildSmokeTestWidget"), Result);
 		return Result;
 	}
+
 	if (!ValidateRequest(Request, Result))
 	{
+		RecordScriptOperation(TEXT("BuildSmokeTestWidget"), Result);
 		return Result;
 	}
 
@@ -106,11 +112,14 @@ FAutoBlueprintBuildResult UAutoBlueprintSubsystem::BuildWidgetBlueprint(const FS
 	if (!AutoBlueprint::CheckEditorContext(ContextCode, ContextMessage))
 	{
 		AddError(Result, *ContextCode, ContextMessage);
+		RecordScriptOperation(TEXT("BuildWidgetBlueprint"), Result);
 		return Result;
 	}
+
 	if (!bAcceptScriptRequests || bBuildInProgress)
 	{
 		AddError(Result, TEXT("EDITOR_BUSY"), TEXT("An initialized, idle editor subsystem is required."));
+		RecordScriptOperation(TEXT("BuildWidgetBlueprint"), Result);
 		return Result;
 	}
 
@@ -118,6 +127,7 @@ FAutoBlueprintBuildResult UAutoBlueprintSubsystem::BuildWidgetBlueprint(const FS
 
 	Result = AutoBlueprint::BuildLayoutBlueprint(LayoutJson, Options);
 	AutoBlueprint::WriteBuildReport(Result, Options);
+	RecordScriptOperation(TEXT("BuildWidgetBlueprint"), Result);
 	return Result;
 }
 
@@ -130,11 +140,14 @@ FAutoBlueprintBuildResult UAutoBlueprintSubsystem::BuildFromLayoutFile(const FSt
 	if (!AutoBlueprint::CheckEditorContext(ContextCode, ContextMessage))
 	{
 		AddError(Result, *ContextCode, ContextMessage);
+		RecordScriptOperation(TEXT("BuildFromLayoutFile"), Result);
 		return Result;
 	}
+
 	if (!bAcceptScriptRequests || bBuildInProgress)
 	{
 		AddError(Result, TEXT("EDITOR_BUSY"), TEXT("An initialized, idle editor subsystem is required."));
+		RecordScriptOperation(TEXT("BuildFromLayoutFile"), Result);
 		return Result;
 	}
 
@@ -152,6 +165,7 @@ FAutoBlueprintBuildResult UAutoBlueprintSubsystem::BuildFromLayoutFile(const FSt
 	}
 
 	AutoBlueprint::WriteBuildReport(Result, Options);
+	RecordScriptOperation(TEXT("BuildFromLayoutFile"), Result);
 	return Result;
 }
 
@@ -164,11 +178,14 @@ FAutoBlueprintGenerationResult UAutoBlueprintSubsystem::GenerateFromLayout(const
 	if (!AutoBlueprint::CheckEditorContext(ContextCode, ContextMessage))
 	{
 		AddError(Result.Widget, *ContextCode, ContextMessage);
+		RecordScriptOperation(TEXT("GenerateFromLayout"), Result);
 		return Result;
 	}
+
 	if (!bAcceptScriptRequests || bBuildInProgress)
 	{
 		AddError(Result.Widget, TEXT("EDITOR_BUSY"), TEXT("An initialized, idle editor subsystem is required."));
+		RecordScriptOperation(TEXT("GenerateFromLayout"), Result);
 		return Result;
 	}
 
@@ -176,6 +193,7 @@ FAutoBlueprintGenerationResult UAutoBlueprintSubsystem::GenerateFromLayout(const
 
 	Result = AutoBlueprint::GenerateLayoutBlueprint(LayoutJson, Options);
 	AutoBlueprint::WriteGenerationReport(Result, Options);
+	RecordScriptOperation(TEXT("GenerateFromLayout"), Result);
 	return Result;
 }
 
@@ -188,11 +206,14 @@ FAutoBlueprintGenerationResult UAutoBlueprintSubsystem::GenerateFromLayoutFile(c
 	if (!AutoBlueprint::CheckEditorContext(ContextCode, ContextMessage))
 	{
 		AddError(Result.Widget, *ContextCode, ContextMessage);
+		RecordScriptOperation(TEXT("GenerateFromLayoutFile"), Result);
 		return Result;
 	}
+
 	if (!bAcceptScriptRequests || bBuildInProgress)
 	{
 		AddError(Result.Widget, TEXT("EDITOR_BUSY"), TEXT("An initialized, idle editor subsystem is required."));
+		RecordScriptOperation(TEXT("GenerateFromLayoutFile"), Result);
 		return Result;
 	}
 
@@ -210,6 +231,7 @@ FAutoBlueprintGenerationResult UAutoBlueprintSubsystem::GenerateFromLayoutFile(c
 	}
 
 	AutoBlueprint::WriteGenerationReport(Result, Options);
+	RecordScriptOperation(TEXT("GenerateFromLayoutFile"), Result);
 	return Result;
 }
 
@@ -244,6 +266,7 @@ void UAutoBlueprintSubsystem::Deinitialize()
 {
 	// Tasks are synchronous; no VM or callback is retained by the subsystem.
 	bAcceptScriptRequests = false;
+	ScriptOperations.Reset();
 	Super::Deinitialize();
 }
 
@@ -255,22 +278,29 @@ FAutoBlueprintLuaRunResult UAutoBlueprintSubsystem::RunEditorScript(const FAutoB
 	{
 		return Result;
 	}
+
 	if (!bAcceptScriptRequests)
 	{
 		Result.Code = TEXT("SUBSYSTEM_UNAVAILABLE");
 		Result.Message = TEXT("AutoBlueprint is not accepting tool tasks during initialization or shutdown.");
 		return Result;
 	}
+
 	if (bScriptInProgress || bBuildInProgress)
 	{
 		Result.Code = TEXT("EDITOR_BUSY");
 		Result.Message = TEXT("Another AutoBlueprint script or build is in progress. Nested script execution is not supported.");
 		return Result;
 	}
+
 	TGuardValue<bool> ScriptGuard(bScriptInProgress, true);
 	FAutoBlueprintEditorLuaRunner Runner;
 
-	return Runner.Run(Request);
+	ScriptOperations.Reset();
+	Result = Runner.Run(Request);
+	Result.Operations = MoveTemp(ScriptOperations);
+	ScriptOperations.Reset();
+	return Result;
 }
 
 FAutoBlueprintValidationResult UAutoBlueprintSubsystem::ValidateLayout(const FString& LayoutJson)
@@ -283,6 +313,7 @@ FAutoBlueprintValidationResult UAutoBlueprintSubsystem::ValidateLayout(const FSt
 		Result.Diagnostics.Add(MoveTemp(Diagnostic));
 		return Result;
 	}
+
 	if (!bAcceptScriptRequests || bBuildInProgress)
 	{
 		Diagnostic.Code = TEXT("EDITOR_BUSY");
@@ -311,4 +342,32 @@ FAutoBlueprintValidationResult UAutoBlueprintSubsystem::ValidateLayoutFile(const
 		return Result;
 	}
 	return ValidateLayout(Json);
+}
+
+void UAutoBlueprintSubsystem::RecordScriptOperation(const TCHAR* Operation, const FAutoBlueprintBuildResult& Result)
+{
+	if (!IsInGameThread() || !bScriptInProgress)
+	{
+		return;
+	}
+
+	FAutoBlueprintGenerationResult Task;
+
+	Task.bSuccess = Result.bSuccess;
+	Task.Widget = Result;
+	Task.ReportFilePath = Result.ReportFilePath;
+	RecordScriptOperation(Operation, Task);
+}
+
+void UAutoBlueprintSubsystem::RecordScriptOperation(const TCHAR* Operation, const FAutoBlueprintGenerationResult& Result)
+{
+	if (!IsInGameThread() || !bScriptInProgress)
+	{
+		return;
+	}
+
+	FAutoBlueprintScriptOperation& Entry = ScriptOperations.AddDefaulted_GetRef();
+
+	Entry.Operation = Operation;
+	Entry.Result = Result;
 }
