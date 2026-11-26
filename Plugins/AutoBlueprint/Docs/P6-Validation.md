@@ -35,14 +35,14 @@ P6 自动化准备 GUID 专属的布局、PNG、阻挡保存的普通文件。�
 
 例如同一脚本先导入两张图片，第一张保存成功、第二张失败，又生成一个不保存的 Widget，最后抛错：
 
-| 结果层级 | 正确含义 |
-| --- | --- |
-| LuaRunResult.bSuccess=false | 脚本没有正常完成；Code/Message 保留错误位置和调用栈 |
-| Operations 中的资源任务 bSuccess=false | 该次生成任务没有完成所有请求步骤 |
-| 第一张纹理 bImported=true、bSaved=true | 文件已保存，脚本失败不会回滚它 |
-| 第二张纹理 bImported=true、bSaved=false | 对象已导入到内存，但没有成功保存 |
-| 资源任务的 Widget bCompiled=true、bSaved=false | Widget 已编译，但因资源保存失败而停止保存 |
-| 另一条不保存的 Widget bSuccess=true、bSaved=false | 该次调用按 bSave=false 完成；不能把它当作已落盘 |
+| 结果层级                                      | 正确含义                             |
+| ----------------------------------------- | -------------------------------- |
+| LuaRunResult.bSuccess=false               | 脚本没有正常完成；Code/Message 保留错误位置和调用栈 |
+| Operations 中的资源任务 bSuccess=false          | 该次生成任务没有完成所有请求步骤                 |
+| 第一张纹理 bImported=true、bSaved=true          | 文件已保存，脚本失败不会回滚它                  |
+| 第二张纹理 bImported=true、bSaved=false         | 对象已导入到内存，但没有成功保存                 |
+| 资源任务的 Widget bCompiled=true、bSaved=false  | Widget 已编译，但因资源保存失败而停止保存         |
+| 另一条不保存的 Widget bSuccess=true、bSaved=false | 该次调用按 bSave=false 完成；不能把它当作已落盘   |
 
 `bSuccess` 仍只描述各自层级。脚本主动处理生成失败并返回 true 时，宿主可以成功，但 Operations 中失败的生成仍为 false。没有新增整体 `bSaved`，没有实现 GenerateBatch，也不执行失败回滚。
 
@@ -119,18 +119,18 @@ P6 不增加覆盖/重导入、跨包原子性、批量调度、运行时业务�
 
 本节是本阶段验证状态的依据，用户只需更新这里。
 
-| 检查 | 状态 |
-| --- | --- |
-| Lua P0–P4 回归 | 云端通过；模拟 UE，不能代替真实反射 |
-| P6 bootstrap/夹具执行顺序和异常传播 | 云端通过（5 项；模拟 UE，无 C++ 记录/资产验证） |
-| 源码、模块依赖、值记录无 UObject 引用、CRLF 和差异检查 | 云端检查通过；不等于 UE 编译/GC 实测 |
-| UE 5.3.2 Win64 完整编译/UHT | 待本地验证 |
-| AutoBlueprint.P6 五项自动化 | 待本地验证 |
-| 当前版本 P0–P5 回归 | 待本地验证 |
-| 控制台：脚本异常后仍能定位已保存/未保存的资产和报告 | 待本地验证 |
-| PIE 与 SIE 期间拒绝生成，停止后可正常执行 | 待本地验证 |
-| 工具任务不影响项目已有游戏 Lua 启动及运行 | 待本地验证 |
-| 编辑器退出/重开：无工具环境残留，命令和生成入口正常 | 待本地验证 |
+| 检查                                 | 状态                            |
+| ---------------------------------- | ----------------------------- |
+| Lua P0–P4 回归                       | 云端通过；模拟 UE，不能代替真实反射           |
+| P6 bootstrap/夹具执行顺序和异常传播           | 云端通过（5 项；模拟 UE，无 C++ 记录/资产验证） |
+| 源码、模块依赖、值记录无 UObject 引用、CRLF 和差异检查 | 云端检查通过；不等于 UE 编译/GC 实测        |
+| UE 5.3.2 Win64 完整编译/UHT            | ✅                             |
+| AutoBlueprint.P6 五项自动化             | ✅                             |
+| 当前版本 P0–P5 回归                      | ✅                             |
+| 控制台：脚本异常后仍能定位已保存/未保存的资产和报告         | ✅                             |
+| PIE 与 SIE 期间拒绝生成，停止后可正常执行          | ✅                             |
+| 工具任务不影响项目已有游戏 Lua 启动及运行            | ✅                             |
+| 编辑器退出/重开：无工具环境残留，命令和生成入口正常         | ✅                             |
 
 离线检查命令（项目根目录，Lua 5.4）：
 
