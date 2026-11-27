@@ -1,6 +1,6 @@
 # AutoBlueprint 项目插件架构设计草案
 
-本方案用于在 ProjectOne 项目内实现 AutoBlueprint 编辑器插件：通过 Lua + UnLua 调用 C++ 编辑器核心，把经过审阅的 JSON 布局配置转换为标准 User Widget Blueprint `.uasset`，在 UMG Designer 中打开即可查看和编辑控件树。目标版本为 UE 5.3.2、UnLua 2.3.6，首版以 Win64 Editor 为验证基线。版本为 0.11 草案，更新日期 2026-11-26。P0–P6 已由用户本地验证通过，P7 待开发。P6 验收记录见 `P6-Validation.md` 第 5 节（提交 `3a14338`）。
+本方案用于在 ProjectOne 项目内实现 AutoBlueprint 编辑器插件：通过 Lua + UnLua 调用 C++ 编辑器核心，把经过审阅的 JSON 布局配置转换为标准 User Widget Blueprint `.uasset`，在 UMG Designer 中打开即可查看和编辑控件树。目标版本为 UE 5.3.2、UnLua 2.3.6，首版以 Win64 Editor 为验证基线。版本为 0.12 草案，更新日期 2026-11-27。P0–P6 已由用户本地验证通过，P7 收银测试素材已准备，待本地验收。P6 验收记录见 `P6-Validation.md` 第 5 节（提交 `3a14338`）。
 
 ## 1 范围与待确认项
 
@@ -14,7 +14,7 @@
 | 插件位置 | `ProjectOne/Plugins/AutoBlueprint/` |
 | 资产位置 | 项目 `/Game/UI/...`，对应 `ProjectOne/Content/UI/...` |
 | 重复生成 | 首版 CreateOnly；覆盖重建和保留人工修改的更新作为后续独立能力 |
-| 当前实现 | P0–P6 已本地验证通过，P7 待开发。详见 [P6 验证说明](P6-Validation.md) |
+| 当前实现 | P0–P6 已本地验证通过，P7 收银测试素材已准备，待本地验收。详见 [P7 验证说明](P7-Validation.md) |
 
 这里的“直接可用”指蓝图能够成功编译、保存、重新打开、实例化并通过 `AddToViewport` 显示。原生按钮可呈现常规交互样式，点击之后的游戏业务行为由后续逻辑实现。
 
@@ -492,7 +492,7 @@ print("Generated: " .. result.TargetAssetPath)
 
 现有收银 UI 的 `ASSET_MAP.md`、`UMG_LAYOUT.md` 与交互稿作为布局和命名依据。其中整板 JPG 应作为参考，不能用一张整板图片代替可编辑控件树；缺少独立切图的区域需要补图，或在确认后用原生控件组合表达。
 
-版本 0.11 草案以 Lua + UnLua + C++ 编辑器核心为实施基线。首版使用 CreateOnly，业务事件绑定、覆盖重建及增量更新留作后续能力。P0 及结果重构已由用户验证；P1/P2 已本地验证；P3 已本地验收通过；P4–P6 已本地验收通过，记录见 `P0-Validation.md` 至 `P6-Validation.md`。
+版本 0.12 草案以 Lua + UnLua + C++ 编辑器核心为实施基线。首版使用 CreateOnly，业务事件绑定、覆盖重建及增量更新留作后续能力。P0 及结果重构已由用户验证；P1/P2 已本地验证；P3 已本地验收通过；P4–P6 已本地验收通过，记录见 `P0-Validation.md` 至 `P6-Validation.md`。
 
 
 ### P4 已实现的资源任务入口

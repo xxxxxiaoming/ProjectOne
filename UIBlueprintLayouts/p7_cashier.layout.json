@@ -1,0 +1,1257 @@
+{
+  "schema_version": 1,
+  "asset": {
+    "package_path": "/Game/UI/AutoBlueprintTests/P7Cashier/WBP_P7_CashierMain"
+  },
+  "design": {
+    "width": 1024,
+    "height": 1536
+  },
+  "resources": {
+    "machine_body": {
+      "source_file": "Content/UI/Textures/T_Cashier_MachineBody.png",
+      "package_path": "/Game/UI/AutoBlueprintTests/P7Cashier/Textures/T_Cashier_MachineBody"
+    },
+    "top_plate": {
+      "source_file": "Content/UI/Textures/T_Cashier_TopPlate.png",
+      "package_path": "/Game/UI/AutoBlueprintTests/P7Cashier/Textures/T_Cashier_TopPlate"
+    },
+    "basket": {
+      "source_file": "Content/UI/Textures/T_Cashier_Basket.png",
+      "package_path": "/Game/UI/AutoBlueprintTests/P7Cashier/Textures/T_Cashier_Basket"
+    },
+    "scanner": {
+      "source_file": "Content/UI/Textures/T_Cashier_Scanner.png",
+      "package_path": "/Game/UI/AutoBlueprintTests/P7Cashier/Textures/T_Cashier_Scanner"
+    },
+    "receipt_paper": {
+      "source_file": "Content/UI/Textures/T_Cashier_ReceiptPaper.png",
+      "package_path": "/Game/UI/AutoBlueprintTests/P7Cashier/Textures/T_Cashier_ReceiptPaper"
+    },
+    "bread_bag": {
+      "source_file": "Content/UI/Textures/T_Cashier_BreadBag.png",
+      "package_path": "/Game/UI/AutoBlueprintTests/P7Cashier/Textures/T_Cashier_BreadBag"
+    },
+    "settlement_plate": {
+      "source_file": "Content/UI/Textures/T_Cashier_SettlementPlate.png",
+      "package_path": "/Game/UI/AutoBlueprintTests/P7Cashier/Textures/T_Cashier_SettlementPlate"
+    },
+    "drawer_body": {
+      "source_file": "Content/UI/Textures/T_Cashier_DrawerBody.png",
+      "package_path": "/Game/UI/AutoBlueprintTests/P7Cashier/Textures/T_Cashier_DrawerBody"
+    },
+    "denom_key": {
+      "source_file": "Content/UI/Textures/T_Cashier_DenomKey.png",
+      "package_path": "/Game/UI/AutoBlueprintTests/P7Cashier/Textures/T_Cashier_DenomKey"
+    },
+    "selected_chip": {
+      "source_file": "Content/UI/Textures/T_Cashier_SelectedChip.png",
+      "package_path": "/Game/UI/AutoBlueprintTests/P7Cashier/Textures/T_Cashier_SelectedChip"
+    },
+    "confirm_key": {
+      "source_file": "Content/UI/Textures/T_Cashier_ConfirmKey.png",
+      "package_path": "/Game/UI/AutoBlueprintTests/P7Cashier/Textures/T_Cashier_ConfirmKey"
+    }
+  },
+  "root": {
+    "name": "RootCanvas",
+    "type": "CanvasPanel",
+    "is_variable": false,
+    "properties": {
+      "visibility": "SelfHitTestInvisible"
+    },
+    "children": [
+      {
+        "name": "SCL_Adaptive",
+        "type": "ScaleBox",
+        "is_variable": false,
+        "slot": {
+          "type": "Canvas",
+          "offsets": [0, 0, 0, 0],
+          "anchors": {
+            "min": [0, 0],
+            "max": [1, 1]
+          }
+        },
+        "properties": {
+          "stretch": "ScaleToFit",
+          "stretch_direction": "Both",
+          "visibility": "SelfHitTestInvisible"
+        },
+        "children": [
+          {
+            "name": "BOX_DesignSize",
+            "type": "SizeBox",
+            "is_variable": false,
+            "slot": {
+              "type": "ScaleBox",
+              "horizontal_alignment": "Center",
+              "vertical_alignment": "Center"
+            },
+            "properties": {
+              "width_override": 1024,
+              "height_override": 1536,
+              "visibility": "SelfHitTestInvisible"
+            },
+            "children": [
+              {
+                "name": "CAN_Artboard",
+                "type": "CanvasPanel",
+                "is_variable": false,
+                "slot": {
+                  "type": "SizeBox"
+                },
+                "properties": {
+                  "visibility": "SelfHitTestInvisible"
+                },
+                "children": [
+                  {
+                    "name": "IMG_MachineBody",
+                    "type": "Image",
+                    "is_variable": false,
+                    "slot": {
+                      "type": "Canvas",
+                      "offsets": [0, 0, 0, 0],
+                      "anchors": {
+                        "min": [0, 0],
+                        "max": [1, 1]
+                      }
+                    },
+                    "properties": {
+                      "visibility": "HitTestInvisible",
+                      "brush": {
+                        "resource": "machine_body"
+                      }
+                    }
+                  },
+                  {
+                    "name": "OVL_TopBar",
+                    "type": "Overlay",
+                    "is_variable": false,
+                    "slot": {
+                      "type": "Canvas",
+                      "offsets": [57, 10, 910, 96],
+                      "z_order": 1
+                    },
+                    "properties": {
+                      "visibility": "SelfHitTestInvisible"
+                    },
+                    "children": [
+                      {
+                        "name": "IMG_TopPlate",
+                        "type": "Image",
+                        "is_variable": false,
+                        "slot": {
+                          "type": "Overlay"
+                        },
+                        "properties": {
+                          "visibility": "HitTestInvisible",
+                          "brush": {
+                            "resource": "top_plate"
+                          }
+                        }
+                      },
+                      {
+                        "name": "CAN_TopBar",
+                        "type": "CanvasPanel",
+                        "is_variable": false,
+                        "slot": {
+                          "type": "Overlay"
+                        },
+                        "properties": {
+                          "visibility": "SelfHitTestInvisible"
+                        },
+                        "children": [
+                          {
+                            "name": "TXT_TimeLabel",
+                            "type": "TextBlock",
+                            "is_variable": false,
+                            "slot": {
+                              "type": "Canvas",
+                              "offsets": [78, 47, 0, 0],
+                              "alignment": [0, 0.5],
+                              "auto_size": true
+                            },
+                            "properties": {
+                              "text": "剩余时间",
+                              "font_size": 34,
+                              "color": [0.012, 0.01, 0.008, 1],
+                              "visibility": "HitTestInvisible"
+                            }
+                          },
+                          {
+                            "name": "TXT_TimeRemaining",
+                            "type": "TextBlock",
+                            "is_variable": true,
+                            "slot": {
+                              "type": "Canvas",
+                              "offsets": [328, 47, 0, 0],
+                              "alignment": [0.5, 0.5],
+                              "auto_size": true
+                            },
+                            "properties": {
+                              "text": "01:24",
+                              "font_size": 60,
+                              "color": [0.012, 0.01, 0.008, 1],
+                              "visibility": "HitTestInvisible"
+                            }
+                          },
+                          {
+                            "name": "IMG_TopDivider",
+                            "type": "Image",
+                            "is_variable": false,
+                            "slot": {
+                              "type": "Canvas",
+                              "offsets": [503, 20, 2, 54]
+                            },
+                            "properties": {
+                              "visibility": "HitTestInvisible",
+                              "brush": {
+                                "resource": "machine_body",
+                                "tint": [0.15, 0.12, 0.09, 1]
+                              }
+                            }
+                          },
+                          {
+                            "name": "TXT_ScoreLabel",
+                            "type": "TextBlock",
+                            "is_variable": false,
+                            "slot": {
+                              "type": "Canvas",
+                              "offsets": [577, 47, 0, 0],
+                              "alignment": [0, 0.5],
+                              "auto_size": true
+                            },
+                            "properties": {
+                              "text": "本班分",
+                              "font_size": 34,
+                              "color": [0.012, 0.01, 0.008, 1],
+                              "visibility": "HitTestInvisible"
+                            }
+                          },
+                          {
+                            "name": "TXT_ShiftScore",
+                            "type": "TextBlock",
+                            "is_variable": true,
+                            "slot": {
+                              "type": "Canvas",
+                              "offsets": [782, 47, 0, 0],
+                              "alignment": [0.5, 0.5],
+                              "auto_size": true
+                            },
+                            "properties": {
+                              "text": "120",
+                              "font_size": 60,
+                              "color": [0.012, 0.01, 0.008, 1],
+                              "visibility": "HitTestInvisible"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "OVL_Basket",
+                    "type": "Overlay",
+                    "is_variable": false,
+                    "slot": {
+                      "type": "Canvas",
+                      "offsets": [6, 125, 439, 409],
+                      "z_order": 1
+                    },
+                    "properties": {
+                      "visibility": "SelfHitTestInvisible"
+                    },
+                    "children": [
+                      {
+                        "name": "IMG_Basket",
+                        "type": "Image",
+                        "is_variable": false,
+                        "slot": {
+                          "type": "Overlay"
+                        },
+                        "properties": {
+                          "visibility": "HitTestInvisible",
+                          "brush": {
+                            "resource": "basket"
+                          }
+                        }
+                      },
+                      {
+                        "name": "CAN_ProductArea",
+                        "type": "CanvasPanel",
+                        "is_variable": true,
+                        "slot": {
+                          "type": "Overlay"
+                        },
+                        "properties": {
+                          "visibility": "SelfHitTestInvisible"
+                        },
+                        "children": [
+                          {
+                            "name": "BTN_ProductPreview",
+                            "type": "Button",
+                            "is_variable": true,
+                            "slot": {
+                              "type": "Canvas",
+                              "offsets": [88, 103, 250, 257]
+                            },
+                            "properties": {
+                              "is_enabled": false,
+                              "is_focusable": true,
+                              "style": {
+                                "normal": {
+                                  "resource": "bread_bag"
+                                },
+                                "hovered": {
+                                  "resource": "bread_bag",
+                                  "tint": [1, 0.95, 0.78, 1]
+                                },
+                                "pressed": {
+                                  "resource": "bread_bag",
+                                  "tint": [0.72, 0.68, 0.59, 1]
+                                },
+                                "disabled": {
+                                  "resource": "bread_bag",
+                                  "tint": [0.74, 0.74, 0.74, 1]
+                                }
+                              }
+                            },
+                            "children": [
+                              {
+                                "name": "CAN_ProductLabel",
+                                "type": "CanvasPanel",
+                                "is_variable": false,
+                                "slot": {
+                                  "type": "Button"
+                                },
+                                "properties": {
+                                  "visibility": "HitTestInvisible"
+                                },
+                                "children": [
+                                  {
+                                    "name": "TXT_ProductName",
+                                    "type": "TextBlock",
+                                    "is_variable": false,
+                                    "slot": {
+                                      "type": "Canvas",
+                                      "offsets": [130, 126, 0, 0],
+                                      "alignment": [0.5, 0.5],
+                                      "auto_size": true
+                                    },
+                                    "properties": {
+                                      "text": "面包",
+                                      "font_size": 34,
+                                      "color": [0.085, 0.063, 0.041, 1],
+                                      "visibility": "HitTestInvisible"
+                                    }
+                                  },
+                                  {
+                                    "name": "IMG_ScannedBadge",
+                                    "type": "Image",
+                                    "is_variable": true,
+                                    "slot": {
+                                      "type": "Canvas",
+                                      "offsets": [141, 174, 96, 42]
+                                    },
+                                    "properties": {
+                                      "visibility": "HitTestInvisible",
+                                      "brush": {
+                                        "resource": "selected_chip",
+                                        "tint": [0.41, 0.41, 0.37, 1]
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "name": "TXT_ScannedBadge",
+                                    "type": "TextBlock",
+                                    "is_variable": true,
+                                    "slot": {
+                                      "type": "Canvas",
+                                      "offsets": [189, 193, 0, 0],
+                                      "alignment": [0.5, 0.5],
+                                      "auto_size": true
+                                    },
+                                    "properties": {
+                                      "text": "已扫",
+                                      "font_size": 25,
+                                      "color": [1, 0.93, 0.79, 1],
+                                      "visibility": "HitTestInvisible"
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "CAN_Scanner",
+                    "type": "CanvasPanel",
+                    "is_variable": false,
+                    "slot": {
+                      "type": "Canvas",
+                      "offsets": [461, 170, 260, 332],
+                      "z_order": 1
+                    },
+                    "properties": {
+                      "visibility": "SelfHitTestInvisible"
+                    },
+                    "children": [
+                      {
+                        "name": "TXT_ScannerTitle",
+                        "type": "TextBlock",
+                        "is_variable": false,
+                        "slot": {
+                          "type": "Canvas",
+                          "offsets": [130, 37, 0, 0],
+                          "alignment": [0.5, 0.5],
+                          "auto_size": true
+                        },
+                        "properties": {
+                          "text": "购物篮 / 扫码",
+                          "font_size": 33,
+                          "color": [0.012, 0.01, 0.008, 1],
+                          "visibility": "HitTestInvisible"
+                        }
+                      },
+                      {
+                        "name": "IMG_ScannerDivider",
+                        "type": "Image",
+                        "is_variable": false,
+                        "slot": {
+                          "type": "Canvas",
+                          "offsets": [15, 64, 230, 2]
+                        },
+                        "properties": {
+                          "visibility": "HitTestInvisible",
+                          "brush": {
+                            "resource": "machine_body",
+                            "tint": [0.15, 0.12, 0.09, 1]
+                          }
+                        }
+                      },
+                      {
+                        "name": "IMG_Scanner",
+                        "type": "Image",
+                        "is_variable": true,
+                        "slot": {
+                          "type": "Canvas",
+                          "offsets": [0, 106, 260, 226]
+                        },
+                        "properties": {
+                          "visibility": "HitTestInvisible",
+                          "brush": {
+                            "resource": "scanner"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "name": "OVL_Receipt",
+                    "type": "Overlay",
+                    "is_variable": false,
+                    "slot": {
+                      "type": "Canvas",
+                      "offsets": [725, 129, 273, 383],
+                      "z_order": 1
+                    },
+                    "properties": {
+                      "visibility": "SelfHitTestInvisible"
+                    },
+                    "children": [
+                      {
+                        "name": "IMG_ReceiptPaper",
+                        "type": "Image",
+                        "is_variable": false,
+                        "slot": {
+                          "type": "Overlay"
+                        },
+                        "properties": {
+                          "visibility": "HitTestInvisible",
+                          "brush": {
+                            "resource": "receipt_paper"
+                          }
+                        }
+                      },
+                      {
+                        "name": "CAN_Receipt",
+                        "type": "CanvasPanel",
+                        "is_variable": false,
+                        "slot": {
+                          "type": "Overlay"
+                        },
+                        "properties": {
+                          "visibility": "SelfHitTestInvisible"
+                        },
+                        "children": [
+                          {
+                            "name": "TXT_ReceiptTitle",
+                            "type": "TextBlock",
+                            "is_variable": false,
+                            "slot": {
+                              "type": "Canvas",
+                              "offsets": [137, 79, 0, 0],
+                              "alignment": [0.5, 0.5],
+                              "auto_size": true
+                            },
+                            "properties": {
+                              "text": "已扫描",
+                              "font_size": 36,
+                              "color": [0.012, 0.01, 0.008, 1],
+                              "visibility": "HitTestInvisible"
+                            }
+                          },
+                          {
+                            "name": "IMG_ReceiptHeaderRule",
+                            "type": "Image",
+                            "is_variable": false,
+                            "slot": {
+                              "type": "Canvas",
+                              "offsets": [47, 116, 178, 2]
+                            },
+                            "properties": {
+                              "visibility": "HitTestInvisible",
+                              "brush": {
+                                "resource": "machine_body",
+                                "tint": [0.15, 0.12, 0.09, 1]
+                              }
+                            }
+                          },
+                          {
+                            "name": "VB_ScannedItems",
+                            "type": "VerticalBox",
+                            "is_variable": true,
+                            "slot": {
+                              "type": "Canvas",
+                              "offsets": [47, 132, 178, 204]
+                            },
+                            "properties": {
+                              "visibility": "SelfHitTestInvisible"
+                            },
+                            "children": [
+                              {
+                                "name": "BOX_ReceiptRowPreview",
+                                "type": "SizeBox",
+                                "is_variable": false,
+                                "slot": {
+                                  "type": "VerticalBox"
+                                },
+                                "properties": {
+                                  "height_override": 58,
+                                  "visibility": "SelfHitTestInvisible"
+                                },
+                                "children": [
+                                  {
+                                    "name": "CAN_ReceiptRowPreview",
+                                    "type": "CanvasPanel",
+                                    "is_variable": false,
+                                    "slot": {
+                                      "type": "SizeBox"
+                                    },
+                                    "properties": {
+                                      "visibility": "SelfHitTestInvisible"
+                                    },
+                                    "children": [
+                                      {
+                                        "name": "TXT_ReceiptItemName",
+                                        "type": "TextBlock",
+                                        "is_variable": false,
+                                        "slot": {
+                                          "type": "Canvas",
+                                          "offsets": [3, 25, 0, 0],
+                                          "alignment": [0, 0.5],
+                                          "auto_size": true
+                                        },
+                                        "properties": {
+                                          "text": "面包",
+                                          "font_size": 29,
+                                          "color": [0.012, 0.01, 0.008, 1],
+                                          "visibility": "HitTestInvisible"
+                                        }
+                                      },
+                                      {
+                                        "name": "TXT_ReceiptItemPrice",
+                                        "type": "TextBlock",
+                                        "is_variable": false,
+                                        "slot": {
+                                          "type": "Canvas",
+                                          "offsets": [175, 25, 0, 0],
+                                          "alignment": [1, 0.5],
+                                          "auto_size": true
+                                        },
+                                        "properties": {
+                                          "text": "¥8",
+                                          "font_size": 31,
+                                          "color": [0.012, 0.01, 0.008, 1],
+                                          "visibility": "HitTestInvisible"
+                                        }
+                                      },
+                                      {
+                                        "name": "IMG_ReceiptRowRule",
+                                        "type": "Image",
+                                        "is_variable": false,
+                                        "slot": {
+                                          "type": "Canvas",
+                                          "offsets": [0, 53, 178, 1]
+                                        },
+                                        "properties": {
+                                          "visibility": "HitTestInvisible",
+                                          "brush": {
+                                            "resource": "machine_body",
+                                            "tint": [0.15, 0.12, 0.09, 1]
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "OVL_Settlement",
+                    "type": "Overlay",
+                    "is_variable": false,
+                    "slot": {
+                      "type": "Canvas",
+                      "offsets": [39, 547, 947, 357],
+                      "z_order": 1
+                    },
+                    "properties": {
+                      "visibility": "SelfHitTestInvisible"
+                    },
+                    "children": [
+                      {
+                        "name": "IMG_SettlementPlate",
+                        "type": "Image",
+                        "is_variable": false,
+                        "slot": {
+                          "type": "Overlay"
+                        },
+                        "properties": {
+                          "visibility": "HitTestInvisible",
+                          "brush": {
+                            "resource": "settlement_plate"
+                          }
+                        }
+                      },
+                      {
+                        "name": "CAN_Settlement",
+                        "type": "CanvasPanel",
+                        "is_variable": false,
+                        "slot": {
+                          "type": "Overlay"
+                        },
+                        "properties": {
+                          "visibility": "SelfHitTestInvisible"
+                        },
+                        "children": [
+                          {
+                            "name": "CAN_SubtotalRow",
+                            "type": "CanvasPanel",
+                            "is_variable": false,
+                            "slot": {
+                              "type": "Canvas",
+                              "offsets": [40, 32, 867, 90]
+                            },
+                            "properties": {
+                              "visibility": "SelfHitTestInvisible"
+                            },
+                            "children": [
+                              {
+                                "name": "TXT_SubtotalLabel",
+                                "type": "TextBlock",
+                                "is_variable": false,
+                                "slot": {
+                                  "type": "Canvas",
+                                  "offsets": [49, 49, 0, 0],
+                                  "alignment": [0, 0.5],
+                                  "auto_size": true
+                                },
+                                "properties": {
+                                  "text": "应收 S",
+                                  "font_size": 52,
+                                  "color": [0.012, 0.01, 0.008, 1],
+                                  "visibility": "HitTestInvisible"
+                                }
+                              },
+                              {
+                                "name": "TXT_Subtotal",
+                                "type": "TextBlock",
+                                "is_variable": true,
+                                "slot": {
+                                  "type": "Canvas",
+                                  "offsets": [842, 49, 0, 0],
+                                  "alignment": [1, 0.5],
+                                  "auto_size": true
+                                },
+                                "properties": {
+                                  "text": "¥8",
+                                  "font_size": 72,
+                                  "color": [0.012, 0.01, 0.008, 1],
+                                  "visibility": "HitTestInvisible"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "name": "IMG_SubtotalRule",
+                            "type": "Image",
+                            "is_variable": false,
+                            "slot": {
+                              "type": "Canvas",
+                              "offsets": [42, 129, 861, 2]
+                            },
+                            "properties": {
+                              "visibility": "HitTestInvisible",
+                              "brush": {
+                                "resource": "machine_body",
+                                "tint": [0.15, 0.12, 0.09, 1]
+                              }
+                            }
+                          },
+                          {
+                            "name": "CAN_PaidRow",
+                            "type": "CanvasPanel",
+                            "is_variable": false,
+                            "slot": {
+                              "type": "Canvas",
+                              "offsets": [40, 138, 867, 90]
+                            },
+                            "properties": {
+                              "visibility": "SelfHitTestInvisible"
+                            },
+                            "children": [
+                              {
+                                "name": "TXT_PaidLabel",
+                                "type": "TextBlock",
+                                "is_variable": false,
+                                "slot": {
+                                  "type": "Canvas",
+                                  "offsets": [49, 45, 0, 0],
+                                  "alignment": [0, 0.5],
+                                  "auto_size": true
+                                },
+                                "properties": {
+                                  "text": "实付 Pay",
+                                  "font_size": 52,
+                                  "color": [0.012, 0.01, 0.008, 1],
+                                  "visibility": "HitTestInvisible"
+                                }
+                              },
+                              {
+                                "name": "TXT_Paid",
+                                "type": "TextBlock",
+                                "is_variable": true,
+                                "slot": {
+                                  "type": "Canvas",
+                                  "offsets": [842, 45, 0, 0],
+                                  "alignment": [1, 0.5],
+                                  "auto_size": true
+                                },
+                                "properties": {
+                                  "text": "¥10",
+                                  "font_size": 72,
+                                  "color": [0.012, 0.01, 0.008, 1],
+                                  "visibility": "HitTestInvisible"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "name": "IMG_PaidRule",
+                            "type": "Image",
+                            "is_variable": false,
+                            "slot": {
+                              "type": "Canvas",
+                              "offsets": [42, 232, 861, 2]
+                            },
+                            "properties": {
+                              "visibility": "HitTestInvisible",
+                              "brush": {
+                                "resource": "machine_body",
+                                "tint": [0.15, 0.12, 0.09, 1]
+                              }
+                            }
+                          },
+                          {
+                            "name": "CAN_ChangeRow",
+                            "type": "CanvasPanel",
+                            "is_variable": true,
+                            "slot": {
+                              "type": "Canvas",
+                              "offsets": [40, 240, 867, 85]
+                            },
+                            "properties": {
+                              "visibility": "SelfHitTestInvisible"
+                            },
+                            "children": [
+                              {
+                                "name": "TXT_ChangeLabel",
+                                "type": "TextBlock",
+                                "is_variable": false,
+                                "slot": {
+                                  "type": "Canvas",
+                                  "offsets": [49, 43, 0, 0],
+                                  "alignment": [0, 0.5],
+                                  "auto_size": true
+                                },
+                                "properties": {
+                                  "text": "已出合计 Σ",
+                                  "font_size": 52,
+                                  "color": [0.012, 0.01, 0.008, 1],
+                                  "visibility": "HitTestInvisible"
+                                }
+                              },
+                              {
+                                "name": "TXT_ChangeSelected",
+                                "type": "TextBlock",
+                                "is_variable": true,
+                                "slot": {
+                                  "type": "Canvas",
+                                  "offsets": [842, 43, 0, 0],
+                                  "alignment": [1, 0.5],
+                                  "auto_size": true
+                                },
+                                "properties": {
+                                  "text": "¥1",
+                                  "font_size": 72,
+                                  "color": [0.012, 0.01, 0.008, 1],
+                                  "visibility": "HitTestInvisible"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "OVL_CashDrawer",
+                    "type": "Overlay",
+                    "is_variable": false,
+                    "slot": {
+                      "type": "Canvas",
+                      "offsets": [9, 925, 1006, 568],
+                      "z_order": 1
+                    },
+                    "properties": {
+                      "visibility": "SelfHitTestInvisible"
+                    },
+                    "children": [
+                      {
+                        "name": "IMG_DrawerBody",
+                        "type": "Image",
+                        "is_variable": false,
+                        "slot": {
+                          "type": "Overlay"
+                        },
+                        "properties": {
+                          "visibility": "HitTestInvisible",
+                          "brush": {
+                            "resource": "drawer_body"
+                          }
+                        }
+                      },
+                      {
+                        "name": "CAN_CashDrawer",
+                        "type": "CanvasPanel",
+                        "is_variable": false,
+                        "slot": {
+                          "type": "Overlay"
+                        },
+                        "properties": {
+                          "visibility": "SelfHitTestInvisible"
+                        },
+                        "children": [
+                          {
+                            "name": "CAN_SelectedBar",
+                            "type": "CanvasPanel",
+                            "is_variable": false,
+                            "slot": {
+                              "type": "Canvas",
+                              "offsets": [76, 39, 852, 128]
+                            },
+                            "properties": {
+                              "visibility": "SelfHitTestInvisible"
+                            },
+                            "children": [
+                              {
+                                "name": "TXT_SelectedLabel",
+                                "type": "TextBlock",
+                                "is_variable": false,
+                                "slot": {
+                                  "type": "Canvas",
+                                  "offsets": [27, 60, 0, 0],
+                                  "alignment": [0, 0.5],
+                                  "auto_size": true
+                                },
+                                "properties": {
+                                  "text": "已选面额",
+                                  "font_size": 41,
+                                  "color": [0.012, 0.01, 0.008, 1],
+                                  "visibility": "HitTestInvisible"
+                                }
+                              },
+                              {
+                                "name": "IMG_SelectedStartDivider",
+                                "type": "Image",
+                                "is_variable": false,
+                                "slot": {
+                                  "type": "Canvas",
+                                  "offsets": [221, 22, 2, 72]
+                                },
+                                "properties": {
+                                  "visibility": "HitTestInvisible",
+                                  "brush": {
+                                    "resource": "machine_body",
+                                    "tint": [0.15, 0.12, 0.09, 1]
+                                  }
+                                }
+                              },
+                              {
+                                "name": "HB_SelectedChips",
+                                "type": "HorizontalBox",
+                                "is_variable": true,
+                                "slot": {
+                                  "type": "Canvas",
+                                  "offsets": [242, 24, 370, 72]
+                                },
+                                "properties": {
+                                  "visibility": "SelfHitTestInvisible"
+                                },
+                                "children": [
+                                  {
+                                    "name": "BTN_SelectedYen1",
+                                    "type": "Button",
+                                    "is_variable": true,
+                                    "slot": {
+                                      "type": "HorizontalBox"
+                                    },
+                                    "properties": {
+                                      "is_enabled": true,
+                                      "is_focusable": true,
+                                      "style": {
+                                        "normal": {
+                                          "resource": "selected_chip"
+                                        },
+                                        "hovered": {
+                                          "resource": "selected_chip",
+                                          "tint": [1, 0.95, 0.78, 1]
+                                        },
+                                        "pressed": {
+                                          "resource": "selected_chip",
+                                          "tint": [0.72, 0.68, 0.59, 1]
+                                        },
+                                        "disabled": {
+                                          "resource": "selected_chip",
+                                          "tint": [0.46, 0.46, 0.46, 1]
+                                        }
+                                      }
+                                    },
+                                    "children": [
+                                      {
+                                        "name": "BOX_SelectedChip",
+                                        "type": "SizeBox",
+                                        "is_variable": false,
+                                        "slot": {
+                                          "type": "Button",
+                                          "horizontal_alignment": "Center",
+                                          "vertical_alignment": "Center"
+                                        },
+                                        "properties": {
+                                          "width_override": 154,
+                                          "height_override": 62,
+                                          "visibility": "HitTestInvisible"
+                                        },
+                                        "children": [
+                                          {
+                                            "name": "TXT_SelectedYen1",
+                                            "type": "TextBlock",
+                                            "is_variable": false,
+                                            "slot": {
+                                              "type": "SizeBox",
+                                              "horizontal_alignment": "Center",
+                                              "vertical_alignment": "Center"
+                                            },
+                                            "properties": {
+                                              "text": "¥1",
+                                              "font_size": 45,
+                                              "color": [0.012, 0.01, 0.008, 1],
+                                              "visibility": "HitTestInvisible"
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "IMG_SelectedEndDivider",
+                                "type": "Image",
+                                "is_variable": false,
+                                "slot": {
+                                  "type": "Canvas",
+                                  "offsets": [609, 22, 2, 72]
+                                },
+                                "properties": {
+                                  "visibility": "HitTestInvisible",
+                                  "brush": {
+                                    "resource": "machine_body",
+                                    "tint": [0.15, 0.12, 0.09, 1]
+                                  }
+                                }
+                              },
+                              {
+                                "name": "TXT_RemoveHint",
+                                "type": "TextBlock",
+                                "is_variable": false,
+                                "slot": {
+                                  "type": "Canvas",
+                                  "offsets": [735, 60, 0, 0],
+                                  "alignment": [0.5, 0.5],
+                                  "auto_size": true
+                                },
+                                "properties": {
+                                  "text": "点面额可移除",
+                                  "font_size": 27,
+                                  "color": [0.085, 0.063, 0.041, 1],
+                                  "visibility": "HitTestInvisible"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "name": "HB_Denominations",
+                            "type": "HorizontalBox",
+                            "is_variable": false,
+                            "slot": {
+                              "type": "Canvas",
+                              "offsets": [75, 215, 859, 143]
+                            },
+                            "properties": {
+                              "visibility": "SelfHitTestInvisible"
+                            },
+                            "children": [
+                              {
+                                "name": "BTN_Yen1",
+                                "type": "Button",
+                                "is_variable": true,
+                                "slot": {
+                                  "type": "HorizontalBox",
+                                  "padding": [3, 0, 3, 0],
+                                  "size_rule": "Fill",
+                                  "fill": 1
+                                },
+                                "properties": {
+                                  "is_enabled": true,
+                                  "is_focusable": true,
+                                  "style": {
+                                    "normal": {
+                                      "resource": "denom_key"
+                                    },
+                                    "hovered": {
+                                      "resource": "denom_key",
+                                      "tint": [1, 0.95, 0.78, 1]
+                                    },
+                                    "pressed": {
+                                      "resource": "denom_key",
+                                      "tint": [0.72, 0.68, 0.59, 1]
+                                    },
+                                    "disabled": {
+                                      "resource": "denom_key",
+                                      "tint": [0.46, 0.46, 0.46, 1]
+                                    }
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "name": "TXT_Yen1",
+                                    "type": "TextBlock",
+                                    "is_variable": false,
+                                    "slot": {
+                                      "type": "Button",
+                                      "horizontal_alignment": "Center",
+                                      "vertical_alignment": "Center"
+                                    },
+                                    "properties": {
+                                      "text": "¥1",
+                                      "font_size": 69,
+                                      "color": [0.012, 0.01, 0.008, 1],
+                                      "visibility": "HitTestInvisible"
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "BTN_Yen5",
+                                "type": "Button",
+                                "is_variable": true,
+                                "slot": {
+                                  "type": "HorizontalBox",
+                                  "padding": [3, 0, 3, 0],
+                                  "size_rule": "Fill",
+                                  "fill": 1
+                                },
+                                "properties": {
+                                  "is_enabled": true,
+                                  "is_focusable": true,
+                                  "style": {
+                                    "normal": {
+                                      "resource": "denom_key"
+                                    },
+                                    "hovered": {
+                                      "resource": "denom_key",
+                                      "tint": [1, 0.95, 0.78, 1]
+                                    },
+                                    "pressed": {
+                                      "resource": "denom_key",
+                                      "tint": [0.72, 0.68, 0.59, 1]
+                                    },
+                                    "disabled": {
+                                      "resource": "denom_key",
+                                      "tint": [0.46, 0.46, 0.46, 1]
+                                    }
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "name": "TXT_Yen5",
+                                    "type": "TextBlock",
+                                    "is_variable": false,
+                                    "slot": {
+                                      "type": "Button",
+                                      "horizontal_alignment": "Center",
+                                      "vertical_alignment": "Center"
+                                    },
+                                    "properties": {
+                                      "text": "¥5",
+                                      "font_size": 69,
+                                      "color": [0.012, 0.01, 0.008, 1],
+                                      "visibility": "HitTestInvisible"
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "BTN_Yen10",
+                                "type": "Button",
+                                "is_variable": true,
+                                "slot": {
+                                  "type": "HorizontalBox",
+                                  "padding": [3, 0, 3, 0],
+                                  "size_rule": "Fill",
+                                  "fill": 1
+                                },
+                                "properties": {
+                                  "is_enabled": true,
+                                  "is_focusable": true,
+                                  "style": {
+                                    "normal": {
+                                      "resource": "denom_key"
+                                    },
+                                    "hovered": {
+                                      "resource": "denom_key",
+                                      "tint": [1, 0.95, 0.78, 1]
+                                    },
+                                    "pressed": {
+                                      "resource": "denom_key",
+                                      "tint": [0.72, 0.68, 0.59, 1]
+                                    },
+                                    "disabled": {
+                                      "resource": "denom_key",
+                                      "tint": [0.46, 0.46, 0.46, 1]
+                                    }
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "name": "TXT_Yen10",
+                                    "type": "TextBlock",
+                                    "is_variable": false,
+                                    "slot": {
+                                      "type": "Button",
+                                      "horizontal_alignment": "Center",
+                                      "vertical_alignment": "Center"
+                                    },
+                                    "properties": {
+                                      "text": "¥10",
+                                      "font_size": 69,
+                                      "color": [0.012, 0.01, 0.008, 1],
+                                      "visibility": "HitTestInvisible"
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "name": "BTN_Confirm",
+                            "type": "Button",
+                            "is_variable": true,
+                            "slot": {
+                              "type": "Canvas",
+                              "offsets": [68, 385, 870, 120]
+                            },
+                            "properties": {
+                              "is_enabled": true,
+                              "is_focusable": true,
+                              "style": {
+                                "normal": {
+                                  "resource": "confirm_key"
+                                },
+                                "hovered": {
+                                  "resource": "confirm_key",
+                                  "tint": [1, 0.95, 0.78, 1]
+                                },
+                                "pressed": {
+                                  "resource": "confirm_key",
+                                  "tint": [0.72, 0.68, 0.59, 1]
+                                },
+                                "disabled": {
+                                  "resource": "confirm_key",
+                                  "tint": [0.46, 0.46, 0.46, 1]
+                                }
+                              }
+                            },
+                            "children": [
+                              {
+                                "name": "TXT_Confirm",
+                                "type": "TextBlock",
+                                "is_variable": false,
+                                "slot": {
+                                  "type": "Button",
+                                  "horizontal_alignment": "Center",
+                                  "vertical_alignment": "Center"
+                                },
+                                "properties": {
+                                  "text": "确认",
+                                  "font_size": 70,
+                                  "color": [1, 0.93, 0.79, 1],
+                                  "visibility": "HitTestInvisible"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
